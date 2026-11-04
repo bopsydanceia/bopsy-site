@@ -48,6 +48,9 @@ export class LiveBackend implements Backend {
   }
 
   async estimatedMinutes(): Promise<number> {
+    // app_config is read by signed-in users only; a new visitor keeps the
+    // default without loading supabase-js on the first screen.
+    if (!this.auth.current()) return 2;
     try {
       const client = await this.client();
       const { data } = await client.from('app_config').select('value').eq('key', 'estimated_minutes').maybeSingle();

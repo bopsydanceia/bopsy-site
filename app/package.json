@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run",
     "smoke": "playwright test",
-    "size": "node scripts/size.mjs"
+    "size": "node scripts/size.mjs",
+    "smoke:live": "node scripts/smoke-live.mjs"
   },
   "dependencies": {
     "@revenuecat/purchases-js": "^1.74.0",

@@ -37,9 +37,17 @@ export interface AuthPort {
   signOut(): Promise<void>;
 }
 
+export interface SamplePhoto {
+  file: string;
+  label: string;
+  url: string;
+}
+
 export interface Backend {
   readonly demo: boolean;
   readonly auth: AuthPort;
+  /** Demo only: sample photos to try the flow without one at hand. */
+  readonly samples?: readonly SamplePhoto[];
   dances(): Promise<Dance[]>;
   /** app_config estimated_minutes (C21). */
   estimatedMinutes(): Promise<number>;

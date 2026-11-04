@@ -6,3 +6,4 @@ lighthouse/
 *.local
 .env
 .env.*
+dist-live/

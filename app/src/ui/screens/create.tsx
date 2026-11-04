@@ -3,12 +3,11 @@
 // the box is ticked (D50); then the check (checking, accepted, rejection
 // with its reason) and the main button (free preview, Generate, Unlock).
 import { useEffect } from 'preact/hooks';
-import { DEMO, LINKS } from '../../config';
+import { LINKS } from '../../config';
 import { rejectionText, t } from '../../copy';
 import { primaryAction } from '../../core/flow';
 import { canStart } from '../../core/flow-state';
 import type { Dance } from '../../core/types';
-import { DEMO_SAMPLES } from '../../demo/data';
 import { app, danceBySlug } from '../app-state';
 import { Checkbox, ErrorState, Header, Loading } from '../components';
 import { useLoad, useStore } from '../hooks';
@@ -54,11 +53,12 @@ function Tips() {
 }
 
 function Samples({ onFile }: { onFile: (file: Blob, name: string) => void }) {
-  if (!DEMO) return null;
+  const samples = app().services.backend.samples ?? [];
+  if (samples.length === 0) return null;
   return (
     <div class="samples">
       <span>{t.samplesLabel}</span>
-      {DEMO_SAMPLES.map((sample) => (
+      {samples.map((sample) => (
         <button
           key={sample.file}
           type="button"

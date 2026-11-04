@@ -18,9 +18,9 @@ export const DANCE_COLUMNS = 'id,slug,name,family,preview_url,cost,duration_seco
 
 const FAMILIES: DanceFamily[] = ['trends', 'memes', 'party', 'victory', 'pets'];
 
-/** Posters must be public https URLs for the web (no signed URL before a session). */
+/** Posters must be public https URLs for the web (no signed URL before a session); http only for a local server. */
 function publicUrl(value: string | null): string | null {
-  return value && /^https:\/\//.test(value) ? value : null;
+  return value && /^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)[:/])/.test(value) ? value : null;
 }
 
 export function danceFromRow(row: DanceRow): Dance {

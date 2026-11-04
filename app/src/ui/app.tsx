@@ -1,21 +1,30 @@
 // The shell: one screen per route, the toast, and notices raised outside
-// the create screen shown as toasts.
+// the create screen shown as toasts. Only the catalogue is in the first
+// chunk; the other screens load in idle time just after it.
 import { useEffect } from 'preact/hooks';
 import { routeStore, type Route } from '../core/router';
 import { app, showToast } from './app-state';
-import { Toast } from './components';
+import { Loading, Toast } from './components';
 import { useStore } from './hooks';
+import { lazyScreen } from './lazy';
 import { noticeText } from './notices';
-import { AccountScreen } from './screens/account';
-import { CreateScreen } from './screens/create';
 import { DancesScreen } from './screens/dances';
-import { GeneratingScreen } from './screens/generating';
-import { PaywallScreen } from './screens/paywall';
-import { PreviewScreen } from './screens/preview';
-import { ResultScreen } from './screens/result';
-import { UnlockScreen } from './screens/unlock';
-import { VideosScreen } from './screens/videos';
-import { Loading } from './components';
+
+const CreateScreen = lazyScreen(() => import('./screens/create').then((m) => m.CreateScreen));
+const PreviewScreen = lazyScreen(() => import('./screens/preview').then((m) => m.PreviewScreen));
+const UnlockScreen = lazyScreen(() => import('./screens/unlock').then((m) => m.UnlockScreen));
+const PaywallScreen = lazyScreen(() => import('./screens/paywall').then((m) => m.PaywallScreen));
+const GeneratingScreen = lazyScreen(() => import('./screens/generating').then((m) => m.GeneratingScreen));
+const ResultScreen = lazyScreen(() => import('./screens/result').then((m) => m.ResultScreen));
+const VideosScreen = lazyScreen(() => import('./screens/videos').then((m) => m.VideosScreen));
+const AccountScreen = lazyScreen(() => import('./screens/account').then((m) => m.AccountScreen));
+
+/** Fetches the other screens once the first one is on screen. */
+export function preloadScreens(): void {
+  for (const screen of [CreateScreen, PreviewScreen, UnlockScreen, PaywallScreen, GeneratingScreen, ResultScreen, VideosScreen, AccountScreen]) {
+    void screen.preload().catch(() => undefined);
+  }
+}
 
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
@@ -45,7 +54,7 @@ function Screen({ route }: { route: Route }) {
 export function App() {
   const route = useStore(routeStore);
   const flow = useStore(app().flow.store);
-  // Notices of the flow: inline on the create screen, a toast elsewhere.
+  // Notices of the flow: inline on the create and paywall screens, a toast elsewhere.
   useEffect(() => {
     if (flow.notice && route.name !== 'create' && route.name !== 'paywall') showToast(noticeText(flow.notice));
   }, [flow.notice]);

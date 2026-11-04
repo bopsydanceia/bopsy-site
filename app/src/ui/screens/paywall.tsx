@@ -10,7 +10,7 @@ import { deviceTimeZone } from '../../core/eu';
 import * as pw from '../../core/paywall';
 import type { OfferItem, PackItem, PlanItem } from '../../core/ports';
 import { planSubtitle, planTitle, renewalTerms, savePercent } from '../../core/prices';
-import { navigate } from '../../core/router';
+import { goBack, navigate } from '../../core/router';
 import { app, danceBySlug, showToast } from '../app-state';
 import { Checkbox, ErrorState, Header, Sheet } from '../components';
 import { useStore } from '../hooks';
@@ -143,7 +143,7 @@ export function PaywallScreen() {
 
   return (
     <>
-      <Header close={() => history.length > 1 ? history.back() : navigate('/')} right={<button type="button" class="link" onClick={() => setInfo(true)}>{t.whatAreCoins}</button>} />
+      <Header close={() => goBack('/')} right={<button type="button" class="link" onClick={() => setInfo(true)}>{t.whatAreCoins}</button>} />
       <main>
         {state.mode === 'packs' ? (
           <>

@@ -11,7 +11,7 @@ const ORDER: DanceFamily[] = ['trends', 'pets', 'memes', 'party', 'victory'];
 function DanceCard({ dance, eager }: { dance: Dance; eager: boolean }) {
   const tag = dance.family === 'pets' ? null : dance.isNew ? 'new' : dance.isHot ? 'hot' : null;
   return (
-    <a class="card" href={`#/create/${dance.slug}`} aria-label={dance.name}>
+    <a class="card" href={`#/create/${dance.slug}`}>
       {dance.posterUrl && (
         <img
           src={dance.posterUrl}
@@ -20,13 +20,11 @@ function DanceCard({ dance, eager }: { dance: Dance; eager: boolean }) {
           height={450}
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
-          {...(eager ? { fetchpriority: 'high' } : {})}
+          fetchpriority={eager ? 'high' : 'low'}
         />
       )}
+      <span class="card-name">{dance.name}</span>
       {tag && <span class={`tag ${tag}`}>{tag === 'new' ? t.badgeNew : t.badgeHot}</span>}
-      <span class="card-name" aria-hidden="true">
-        {dance.name}
-      </span>
     </a>
   );
 }

@@ -1,7 +1,38 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { isLiveConfig, keyProblems, type PublicKeys } from './src/core/keys.ts';
+
+/**
+ * First screen speed (D108): the CSS (4 KB gzip) goes inline in index.html
+ * instead of a render-blocking request; the demo build preloads the first
+ * two posters (the LCP image); the live build preconnects to Supabase,
+ * where the catalogue and its posters come from.
+ */
+function firstScreen(live: boolean, supabaseUrl: string): Plugin {
+  return {
+    name: 'bopsy-first-screen',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const html = bundle['index.html'];
+      if (!html || html.type !== 'asset') return;
+      let source = String(html.source);
+      for (const [name, file] of Object.entries(bundle)) {
+        if (file.type !== 'asset' || !name.endsWith('.css')) continue;
+        const link = new RegExp(`<link rel="stylesheet"[^>]*href="\\./${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^>]*>`);
+        if (!link.test(source)) continue;
+        source = source.replace(link, () => `<style>${String(file.source).trim()}</style>`);
+        delete bundle[name];
+      }
+      const hints = live
+        ? `<link rel="preconnect" href="${new URL(supabaseUrl).origin}" crossorigin>`
+        : ['man-dance', 'dog-dance'].map((poster) => `<link rel="preload" as="image" href="./demo/${poster}.webp" fetchpriority="high">`).join('\n');
+      source = source.replace('<link rel="preload"', `${hints}\n<link rel="preload"`);
+      html.source = source;
+    },
+  };
+}
 
 // base './': the same build works at /, /app/ and /bopsy-site/app/ (GitHub
 // Pages), every asset is loaded relative to index.html; routes live in the hash.
@@ -25,10 +56,13 @@ export default defineConfig(({ mode }) => {
       alias: { '#services': fileURLToPath(new URL(`./src/services.${live ? 'live' : 'demo'}.ts`, import.meta.url)) },
     },
     oxc: { jsx: { runtime: 'automatic', importSource: 'preact' } },
+    plugins: [firstScreen(live, keys.supabaseUrl)],
     build: {
       target: 'es2022',
       modulePreload: { polyfill: false },
       assetsInlineLimit: 0,
+      // purchases-js (about 250 KB gzip) loads only at the paywall.
+      chunkSizeWarningLimit: 1100,
     },
     test: {
       environment: 'jsdom',

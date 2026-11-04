@@ -5,7 +5,7 @@ import type { AuthPort, Backend, SendCodeResult, VerifyCodeResult } from '../cor
 import { browserToken, uuid } from '../core/store';
 import { isValidEmail, normalizeEmail } from '../core/otp';
 import type { Account, Dance, PhotoCheckResult, ReportReason, Session, StartResult, Video, Wallet } from '../core/types';
-import { clipUrl, DEMO_DANCES, DEMO_TIMING, sampleUrl, type DemoProductId } from './data';
+import { clipUrl, DEMO_DANCES, DEMO_SAMPLES, DEMO_TIMING, sampleUrl, type DemoProductId } from './data';
 import * as db from './fake-db';
 
 export interface FakeOptions {
@@ -27,6 +27,7 @@ function publicVideo(video: db.FakeVideo): Video {
 export class FakeBackend implements Backend, AuthPort {
   readonly demo = true;
   readonly auth: AuthPort = this;
+  readonly samples = DEMO_SAMPLES;
   readonly state: db.FakeState;
   private readonly now: () => number;
   private readonly sleep: (ms: number) => Promise<void>;
