@@ -2,6 +2,10 @@
 
 Pages exigées par Apple et liées dans l'app (07, 13, 17, 21) : `privacy/`, `terms/`, `support/`, `delete-data/`, plus `legal/` (mentions légales, éditeur français) et une page d'accueil. HTML statique, sans build.
 
+## Page d'accueil (landing, W4)
+
+`index.html` : démo avant/après (photos de la maquette en attendant les vrais clips), « Make my photo dance » vers la web app. L'adresse de la web app se met à un seul endroit, la balise `<meta name="bopsy-app-url" content="">` en haut du fichier ; vide, le bouton affiche « Coming soon ». Le bouton transmet les paramètres de pub de la page (utm_*, ttclid, fbclid) à la web app. Remplacer la démo par une vraie vidéo courte (MP4 H.264, muet, moins de 1 Mo, avec une image d'affiche) quand les clips existent.
+
 ## À remplir avant de publier
 
 Chercher `[` dans les fichiers (les trous sont surlignés en jaune dans les pages) :

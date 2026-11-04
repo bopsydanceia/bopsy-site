@@ -3,20 +3,114 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bopsy · AI dance videos from one photo</title>
-<meta name="description" content="Bopsy turns one photo into a short dance video.">
-<link rel="stylesheet" href="style.css">
+<title>Bopsy · Make anyone dance</title>
+<meta name="description" content="Turn one photo into a trending dance video. People, dogs and cats. Ready in about 2 minutes.">
+<meta name="theme-color" content="#120E18">
+<!-- Web app address (D116). Empty until it is deployed: the button then says "Coming soon". -->
+<meta name="bopsy-app-url" content="">
+<meta property="og:title" content="Bopsy · Make anyone dance">
+<meta property="og:description" content="Turn one photo into a trending dance video.">
+<meta property="og:image" content="assets/man-dance.jpg">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="preload" as="image" href="assets/man-dance.jpg">
+<style>
+/* Landing: one phone-width column, the app's night palette, nothing to load but two photos. */
+:root {
+  --bg: #120E18; --surface: #1C1626; --surface-2: #2A2234; --text: #FBF7F2; --muted: #B3A9BF;
+  --accent: #FF4D8D; --cta: #D42A66; --coin: #FFD23F;
+  --display: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; background: var(--bg); }
+body {
+  margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--body);
+  padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+.wrap { max-width: 430px; margin: 0 auto; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 18px 0 8px; }
+.brand { font: 800 28px/1 var(--display); letter-spacing: -0.04em; color: var(--text); text-decoration: none; }
+.pill { font-size: 13px; font-weight: 700; color: var(--coin); background: var(--surface-2); border-radius: 999px; padding: 6px 12px; }
+.demo { position: relative; margin: 14px 0 0; border-radius: 26px; overflow: hidden; aspect-ratio: 4 / 5; background: var(--surface); }
+.demo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.demo .after { animation: swap 4.8s ease-in-out infinite; }
+.demo .before-inset {
+  position: absolute; left: 14px; bottom: 14px; width: 26%; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden;
+  border: 3px solid var(--text); box-shadow: 0 8px 24px rgba(0,0,0,.45);
+}
+.demo .before-inset img { position: static; width: 100%; height: 100%; object-fit: cover; }
+.demo .tag { position: absolute; right: 14px; top: 14px; font: 800 11px var(--body); letter-spacing: .08em; color: #1a1300; background: var(--coin); border-radius: 999px; padding: 5px 10px; }
+.demo::after { content: ""; position: absolute; inset: auto 0 0 0; height: 40%; background: linear-gradient(transparent, rgba(18,14,24,.55)); pointer-events: none; }
+@keyframes swap { 0%, 40% { opacity: 1; } 50%, 90% { opacity: 0; } 100% { opacity: 1; } }
+h1 { font: 800 clamp(36px, 10vw, 44px)/1.02 var(--display); letter-spacing: -0.04em; margin: 24px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); font-size: 17px; margin: 0 0 22px; }
+.cta {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 58px; border-radius: 29px;
+  background: var(--cta); color: #fff; font-weight: 700; font-size: 18px; text-decoration: none; border: 0;
+  box-shadow: 0 10px 28px rgba(212,42,102,.35);
+}
+.cta[aria-disabled="true"] { background: var(--surface-2); color: var(--muted); box-shadow: none; }
+.cta:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.note { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.steps { list-style: none; padding: 0; margin: 34px 0 0; display: grid; gap: 10px; }
+.steps li { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; background: var(--surface); border-radius: 18px; padding: 14px 16px; }
+.steps b { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); color: var(--coin); font-size: 15px; }
+.steps span { font-weight: 600; }
+.steps small { display: block; color: var(--muted); font-weight: 400; font-size: 14px; }
+.trust { color: var(--muted); font-size: 14px; margin: 26px 0 0; }
+footer { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--surface-2); font-size: 13px; color: var(--muted); }
+footer a { color: var(--muted); }
+.todo { background: #4a3d00; color: #ffe27a; border-radius: 4px; padding: 0 4px; }
+@media (prefers-reduced-motion: reduce) { .demo .after { animation: none; } }
+</style>
 </head>
 <body>
-<header>
-  <a class="brand" href="./">bopsy</a>
-  <nav><a href="privacy/">Privacy</a><a href="terms/">Terms</a><a href="support/">Support</a><a href="delete-data/">Delete data</a></nav>
-</header>
-<main>
-<h1>AI dance videos from one photo</h1>
-<p>Pick a photo of yourself, a friend who agreed, or your dog or cat, choose a trending dance, and Bopsy makes an 8-second video of it dancing. Coming soon to the App Store.</p>
-<p class="muted">Questions: <a href="support/">Support</a>.</p>
-</main>
-<footer><span>© 2026 <span class="todo">[COMPANY LEGAL NAME]</span></span><a href="legal/">Legal notice</a><a href="privacy/">Privacy</a><a href="terms/">Terms</a></footer>
+<div class="wrap">
+  <header>
+    <a class="brand" href="./">bopsy</a>
+    <span class="pill">AI dance videos</span>
+  </header>
+
+  <div class="demo" role="img" aria-label="A man sitting on a sofa, then the same man dancing">
+    <img src="assets/man-sit.jpg" alt="" width="480" height="600">
+    <img class="after" src="assets/man-dance.jpg" alt="" width="480" height="600">
+    <span class="tag">STREET BOUNCE</span>
+    <div class="before-inset"><img src="assets/man-sit.jpg" alt="" width="480" height="600"></div>
+  </div>
+
+  <h1>Make anyone dance</h1>
+  <p class="lede">One photo. Any trend. Your video is ready in about 2 minutes. Works with people, dogs and cats.</p>
+
+  <a class="cta" id="cta" href="#" aria-disabled="true">Coming soon</a>
+  <p class="note" id="cta-note">Try a free preview before you pay.</p>
+
+  <ol class="steps">
+    <li><b>1</b><span>Pick a trending dance<small>New ones drop every week.</small></span></li>
+    <li><b>2</b><span>Add one photo<small>Whole body in the frame, one person or pet.</small></span></li>
+    <li><b>3</b><span>Get your video<small>Save it or post it, then add the trending sound.</small></span></li>
+  </ol>
+
+  <p class="trust">Your photos are erased after 30 days and never used for ads.</p>
+
+  <footer>
+    <span>© 2026 <span class="todo">[COMPANY LEGAL NAME]</span></span>
+    <a href="privacy/">Privacy</a><a href="terms/">Terms</a><a href="support/">Support</a><a href="delete-data/">Delete data</a><a href="legal/">Legal notice</a>
+  </footer>
+</div>
+<script>
+// The button opens the web app, carrying the ad parameters (utm_*, ttclid, fbclid) along.
+(function () {
+  var url = (document.querySelector('meta[name="bopsy-app-url"]') || {}).content || '';
+  var cta = document.getElementById('cta');
+  if (!url) return;
+  var target = new URL(url, location.href);
+  new URLSearchParams(location.search).forEach(function (v, k) { target.searchParams.set(k, v); });
+  cta.href = target.toString();
+  cta.textContent = 'Make my photo dance';
+  cta.removeAttribute('aria-disabled');
+})();
+</script>
 </body>
 </html>
