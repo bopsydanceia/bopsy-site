@@ -1,0 +1,317 @@
+// The flow controller (D113): dance → photo → consent and check → free
+// preview → email → paywall → generation. Side effects go through the
+// Backend port; the screens only call these methods and read the store.
+import {
+  canStart,
+  choosePhoto,
+  initialFlow,
+  makeAnother,
+  needsUpload,
+  photoNeedsRecheck,
+  selectDance,
+  setConsent,
+  uploadFinished,
+  uploadStarted,
+  withNotice,
+  type FlowState,
+  type Notice,
+} from './flow-state';
+import { prepareUpload } from './image';
+import type { Backend } from './ports';
+import type { Navigate } from './router';
+import { createStore, safeStorage, uuid, type Store } from './store';
+import type { Account, Dance, Session, StartResult } from './types';
+
+export type PrimaryAction = 'generate' | 'preview' | 'unlock';
+
+/** C4: a subscriber spends plan then bought coins; without a plan, bought coins only. */
+export function canAfford(account: Account | null, cost: number): boolean {
+  if (!account) return false;
+  return account.subscription?.active ? account.wallet.total >= cost : account.wallet.bought >= cost;
+}
+
+/** What the main button of a checked photo does. */
+export function primaryAction(flow: FlowState, session: Session | null, account: Account | null, cost: number): PrimaryAction {
+  if (session && !session.guest && canAfford(account, cost)) return 'generate';
+  return flow.previewUsed ? 'unlock' : 'preview';
+}
+
+export interface FlowDeps {
+  backend: Backend;
+  navigate: Navigate;
+  dance: (slug: string) => Dance | undefined;
+  now?: () => Date;
+  sleep?: (ms: number) => Promise<void>;
+  /** Default false in tests: no localStorage draft. */
+  persist?: boolean;
+}
+
+const DRAFT_KEY = 'bopsy.flow.v1';
+/** After a purchase the webhook may lag: start-generation is retried this long (D49 "plan activating"). */
+export const ACTIVATION_WAIT_MS = 45_000;
+export const ACTIVATION_RETRY_MS = 2_500;
+
+export class Flow {
+  readonly store: Store<FlowState>;
+  private uploadToken = 0;
+  private readonly now: () => Date;
+  private readonly sleep: (ms: number) => Promise<void>;
+
+  constructor(private readonly deps: FlowDeps) {
+    this.now = deps.now ?? (() => new Date());
+    this.sleep = deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.store = createStore<FlowState>(deps.persist ? restoreDraft() : initialFlow);
+    if (deps.persist) this.store.subscribe(saveDraft);
+  }
+
+  get state(): FlowState {
+    return this.store.get();
+  }
+
+  private set(update: (state: FlowState) => FlowState): void {
+    this.store.set(update);
+  }
+
+  notice(notice: Notice | null): void {
+    this.set((state) => withNotice(state, notice));
+  }
+
+  selectDance(slug: string): void {
+    this.set((state) => selectDance(state, slug));
+  }
+
+  pickPhoto(file: Blob, name: string): void {
+    const previous = this.state.photo;
+    if (previous.kind !== 'none' && previous.url?.startsWith('blob:')) URL.revokeObjectURL(previous.url);
+    const url = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null;
+    this.uploadToken++;
+    this.set((state) => choosePhoto(state, { file, name, url }));
+  }
+
+  /** The consent box. Ticking it sends a photo not sent yet (D50). */
+  async setConsent(checked: boolean): Promise<void> {
+    this.set((state) => setConsent(state, checked, this.now()));
+    if (needsUpload(this.state)) await this.upload();
+  }
+
+  /** Try again after a failed upload, under the same ticked box (D94). */
+  async retryUpload(): Promise<void> {
+    if (needsUpload(this.state)) await this.upload();
+  }
+
+  private async upload(): Promise<void> {
+    const token = ++this.uploadToken;
+    this.set((state) => uploadStarted(state, token));
+    const photo = this.state.photo;
+    if (photo.kind !== 'sending' || !photo.file) return;
+    let outcome: Awaited<ReturnType<Backend['checkPhoto']>>;
+    try {
+      outcome = await this.deps.backend.checkPhoto(await prepareUpload(photo.file), photo.name);
+    } catch {
+      outcome = { status: 'failed' };
+    }
+    this.set((state) => uploadFinished(state, token, outcome));
+  }
+
+  private request(): { dance: Dance; photoId: string; consentAt: string } | null {
+    const state = this.state;
+    const dance = state.danceSlug ? this.deps.dance(state.danceSlug) : undefined;
+    if (!dance || !canStart(state) || state.photo.kind !== 'accepted' || !state.consentAt) return null;
+    return { dance, photoId: state.photo.photoId, consentAt: state.consentAt };
+  }
+
+  /** "Generate free preview" (S50 on the web: 2 s 480p, one per account, browser and IP). */
+  async startPreview(): Promise<void> {
+    const request = this.request();
+    if (!request) return;
+    this.set((state) => ({ ...state, busy: 'preview', notice: null }));
+    const result = await this.deps.backend.startPreview({ danceId: request.dance.id, photoId: request.photoId, consentAt: request.consentAt });
+    this.set((state) => ({ ...state, busy: null }));
+    if (result.kind === 'started') {
+      this.set((state) => ({ ...state, previewId: result.video.id, previewUsed: true }));
+      this.deps.navigate(`/preview/${result.video.id}`);
+      return;
+    }
+    if (result.kind === 'refused' && result.refusal === 'preview_already_used') {
+      this.set((state) => ({ ...state, previewUsed: true, notice: 'preview_used' }));
+      await this.unlock();
+      return;
+    }
+    this.onRefusal(result);
+  }
+
+  /** "Unlock full video": the email is asked here only (D110), then the paywall or the video. */
+  async unlock(): Promise<void> {
+    const session = this.deps.backend.auth.current();
+    if (!session || session.guest) {
+      this.deps.navigate('/unlock');
+      return;
+    }
+    await this.continueSignedIn(false);
+  }
+
+  /**
+   * After the code is verified. When the email belonged to another account,
+   * the photo is sent again under it (same file, same consent).
+   */
+  async continueSignedIn(userChanged: boolean): Promise<void> {
+    const session = this.deps.backend.auth.current();
+    const photo = this.state.photo;
+    if (session && photo.kind === 'accepted' && (userChanged || photo.userId !== session.userId)) {
+      if (!photo.file) {
+        this.set((state) => photoNeedsRecheck(state));
+        this.goCreate();
+        return;
+      }
+      this.set((state) => ({ ...state, photo: { kind: 'local', file: photo.file, name: photo.name, url: photo.url } }));
+      await this.upload();
+      if (this.state.photo.kind !== 'accepted') {
+        this.goCreate();
+        return;
+      }
+    }
+    const dance = this.state.danceSlug ? this.deps.dance(this.state.danceSlug) : undefined;
+    if (!dance || this.state.photo.kind !== 'accepted') {
+      this.deps.navigate(dance ? `/create/${dance.slug}` : '/', { replace: true });
+      return;
+    }
+    const account = await this.deps.backend.account();
+    if (canAfford(account, dance.cost)) await this.generate();
+    else this.deps.navigate('/paywall', { replace: true });
+  }
+
+  /**
+   * Starts the paid video (coins debited server side). After a purchase,
+   * not_subscribed and not_enough_coins mean the webhook has not landed yet:
+   * retried for ACTIVATION_WAIT_MS with the same key.
+   */
+  async generate(options: { afterPurchase?: boolean } = {}): Promise<void> {
+    const request = this.request();
+    if (!request) {
+      this.goCreate();
+      return;
+    }
+    const key = this.state.generation?.key ?? uuid();
+    this.set((state) => ({ ...state, generation: { key, videoId: null }, busy: 'generation', notice: null }));
+    const deadline = this.now().getTime() + (options.afterPurchase ? ACTIVATION_WAIT_MS : 0);
+    for (;;) {
+      const result = await this.deps.backend.startGeneration({
+        danceId: request.dance.id,
+        photoId: request.photoId,
+        consentAt: request.consentAt,
+        idempotencyKey: key,
+      });
+      if (result.kind === 'started') {
+        // The box is unchecked after each start (D49); the photo stays for Make another.
+        this.set((state) => ({ ...state, generation: { key, videoId: result.video.id }, busy: null, consent: false, consentAt: null }));
+        this.deps.navigate(`/generating/${result.video.id}`, { replace: true });
+        return;
+      }
+      const waiting = result.kind === 'refused' && (result.refusal === 'not_subscribed' || result.refusal === 'not_enough_coins');
+      if (waiting && options.afterPurchase && this.now().getTime() < deadline) {
+        this.notice('plan_activating');
+        await this.sleep(ACTIVATION_RETRY_MS);
+        continue;
+      }
+      // A refusal changes nothing on the server: the next try gets a new key.
+      // A lost answer keeps the key, so a retry cannot charge twice.
+      this.set((state) => ({ ...state, busy: null, generation: result.kind === 'failed' ? state.generation : null }));
+      if (waiting) {
+        if (options.afterPurchase) this.notice('plan_activating');
+        else this.deps.navigate('/paywall');
+        return;
+      }
+      this.onRefusal(result);
+      return;
+    }
+  }
+
+  private onRefusal(result: Exclude<StartResult, { kind: 'started' }>): void {
+    if (result.kind === 'failed') {
+      this.notice('error');
+      return;
+    }
+    switch (result.refusal) {
+      case 'consent_missing':
+        this.set((state) => ({ ...state, consent: false, consentAt: null, notice: 'consent_missing' }));
+        this.goCreate();
+        return;
+      case 'photo_not_checked':
+        this.set((state) => photoNeedsRecheck(state));
+        this.goCreate();
+        return;
+      case 'too_many_in_progress':
+        this.notice('too_many');
+        return;
+      case 'dance_unavailable':
+        this.notice('dance_unavailable');
+        this.deps.navigate('/', { replace: true });
+        return;
+      case 'not_subscribed':
+      case 'not_enough_coins':
+        this.deps.navigate('/paywall');
+        return;
+      case 'preview_already_used':
+        this.set((state) => ({ ...state, previewUsed: true, notice: 'preview_used' }));
+        return;
+    }
+  }
+
+  private goCreate(): void {
+    const slug = this.state.danceSlug;
+    this.deps.navigate(slug ? `/create/${slug}` : '/', { replace: true });
+  }
+
+  /** Make another (C11): the same checked photo, the catalogue to pick a dance. */
+  makeAnother(): void {
+    this.set((state) => makeAnother(state));
+    this.deps.navigate('/');
+  }
+
+  /** Sign out or media deleted: nothing of the previous account stays in the flow. */
+  reset(): void {
+    this.uploadToken++;
+    this.store.set({ ...initialFlow, previewUsed: this.state.previewUsed });
+  }
+}
+
+interface Draft {
+  danceSlug: string | null;
+  photo: { photoId: string; userId: string; name: string } | null;
+  consentAt: string | null;
+  previewId: string | null;
+  previewUsed: boolean;
+  generation: FlowState['generation'];
+}
+
+/** What survives a reload or a magic link (never the photo itself). */
+function saveDraft(state: FlowState): void {
+  const draft: Draft = {
+    danceSlug: state.danceSlug,
+    photo: state.photo.kind === 'accepted' ? { photoId: state.photo.photoId, userId: state.photo.userId, name: state.photo.name } : null,
+    consentAt: state.consent ? state.consentAt : null,
+    previewId: state.previewId,
+    previewUsed: state.previewUsed,
+    generation: state.generation,
+  };
+  safeStorage.set(DRAFT_KEY, JSON.stringify(draft));
+}
+
+function restoreDraft(): FlowState {
+  try {
+    const draft = JSON.parse(safeStorage.get(DRAFT_KEY) ?? 'null') as Draft | null;
+    if (!draft) return initialFlow;
+    return {
+      ...initialFlow,
+      danceSlug: draft.danceSlug,
+      photo: draft.photo ? { kind: 'accepted', ...draft.photo, file: null, url: null } : { kind: 'none' },
+      consent: draft.photo !== null && draft.consentAt !== null,
+      consentAt: draft.photo ? draft.consentAt : null,
+      previewId: draft.previewId,
+      previewUsed: draft.previewUsed === true,
+      generation: draft.generation ?? null,
+    };
+  } catch {
+    return initialFlow;
+  }
+}

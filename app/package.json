@@ -1,0 +1,29 @@
+{
+  "name": "bopsy-web-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Bopsy web app: one photo becomes a dance video (D117, D118).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "test": "vitest run",
+    "smoke": "playwright test",
+    "size": "node scripts/size.mjs"
+  },
+  "dependencies": {
+    "@revenuecat/purchases-js": "^1.74.0",
+    "@supabase/supabase-js": "^2.119.0",
+    "preact": "^11.1.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  }
+}
