@@ -70,8 +70,10 @@ function Fan() {
   const flowState = useStore(app().flow.store);
   if (catalog.status !== 'ready') return null;
   const current = catalog.dances.find((dance) => dance.slug === flowState.danceSlug);
-  const others = catalog.dances.filter((dance) => dance !== current && dance.posterUrl);
-  const picks = [others[1], current ?? others[0], others[2] ?? others[3]].filter((dance) => dance?.posterUrl);
+  const others = catalog.dances.filter((dance) => dance !== current && dance.posterUrl && dance.posterUrl !== current?.posterUrl);
+  // One dance per poster: the demo catalogue reuses a few photos.
+  const unique = others.filter((dance, index) => others.findIndex((other) => other.posterUrl === dance.posterUrl) === index);
+  const picks = [unique[0], current ?? unique[1], current ? unique[1] : unique[2]].filter((dance) => dance?.posterUrl);
   if (picks.length < 3) return null;
   return (
     <div class="fan" aria-hidden="true">
