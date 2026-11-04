@@ -19,14 +19,15 @@
 <p>Bopsy turns one photo into a short dance video. This policy explains what we collect, why, who helps us, how long we keep it and what you can do about it. Bopsy is made by <span class="todo">[COMPANY LEGAL NAME]</span>, <span class="todo">[ADDRESS]</span> (“we”), the controller of your data. Contact: <a href="mailto:[SUPPORT EMAIL]"><span class="todo">[SUPPORT EMAIL]</span></a>.</p>
 
 <div class="card">
-  <strong>In short.</strong> You don't create an account with your name or email. We use the photo you pick only to check it and make your video. Photos are erased 30 days after upload. Your photos and videos are never used for ads, never sold, and our providers do not use them to train AI models. You can delete your photos and videos at any time in the app.
+  <strong>In short.</strong> In the app, you don't create an account with your name or email; on the web, you sign in with your email only when you unlock a video. We use the photo you pick only to check it and make your video. Photos are erased 30 days after upload. Your photos and videos are never used for ads, never sold, and our providers do not use them to train AI models. You can delete your photos and videos at any time in the app.
 </div>
 
 <h2>1. What we collect</h2>
 <ul>
-  <li><strong>The photo you pick</strong> and the videos made from it, including the 3-second free preview if you get one.</li>
+  <li><strong>The photo you pick</strong> and the videos made from it, including the free preview if you get one (3 seconds in the app, 2 seconds on the web).</li>
   <li><strong>An anonymous account ID</strong> created when you first open the app, kept in your iPhone's Keychain. We don't ask for your name, email or phone number.</li>
-  <li><strong>Purchases</strong>: which plan or coin pack you bought, when it renews or ends, and your coin balance. Apple handles payment; we never see your card.</li>
+  <li><strong>Purchases</strong>: which plan or coin pack you bought, when it renews or ends, and your coin balance. In the app, Apple handles payment; on the web, RevenueCat and Stripe do (section 4). We never see your full card number.</li>
+  <li><strong>On the web only</strong>: your email address, to sign in with a 6-digit code or a link and to find your purchases; a random identifier stored in your browser, and your IP address, used only to limit free previews to one per browser and per network.</li>
   <li><strong>A device check</strong> (Apple DeviceCheck) so each device gets at most one free preview. It doesn't identify you.</li>
   <li><strong>Notification token</strong>, only if you allow notifications, and your notification choices (video updates, new dances and offers).</li>
   <li><strong>Usage and diagnostics</strong>: which screens you use, app events such as “video started”, and crash reports. We don't keep your IP address.</li>
@@ -39,6 +40,8 @@
   <tr><th>Purpose</th><th>Data</th><th>Legal basis (GDPR)</th></tr>
   <tr><td>Check your photo and make your video</td><td>Photo, videos, account ID</td><td>Contract, and your consent when you tick the box before sending a photo</td></tr>
   <tr><td>Subscriptions, coins and refunds of failed videos</td><td>Purchases, balance, account ID</td><td>Contract; legal obligation for accounting records</td></tr>
+  <tr><td>Sign in and pay on the web</td><td>Email, account ID, payment details handled by Stripe</td><td>Contract; legal obligation for accounting records</td></tr>
+  <tr><td>Limit free previews and prevent payment fraud on the web</td><td>Browser identifier, IP address, payment risk signals (Stripe Radar)</td><td>Legitimate interest</td></tr>
   <tr><td>Notifications about your videos</td><td>Notification token</td><td>Consent (you can turn them off)</td></tr>
   <tr><td>News about dances and offers</td><td>Notification token, your choice</td><td>Consent, off by default</td></tr>
   <tr><td>Keep Bopsy working, safe and improving</td><td>Usage, diagnostics, reports</td><td>Legitimate interest</td></tr>
@@ -51,8 +54,9 @@
 <h2>4. Who helps us</h2>
 <p>These providers process data for us, under contracts that limit them to our instructions:</p>
 <ul>
-  <li><strong>Supabase</strong> (United States): database, anonymous account, private storage of photos and videos, server functions.</li>
-  <li><strong>RevenueCat</strong> (United States): subscriptions and coin packs, linked to your anonymous ID.</li>
+  <li><strong>Supabase</strong> (United States): database, accounts (anonymous in the app, email on the web), private storage of photos and videos, server functions, sign-in emails.</li>
+  <li><strong>RevenueCat</strong> (United States): subscriptions and coin packs, linked to your account ID; on the web, also the checkout and billing of web payments (RevenueCat Web Billing), with your email for receipts.</li>
+  <li><strong>Stripe</strong> (United States and Ireland): processing of web payments (card, Apple Pay, Google Pay) and fraud prevention. Your card details go to Stripe, not to us.</li>
   <li><strong>Apple</strong>: App Store payments, DeviceCheck, push notifications.</li>
   <li><strong>Google Firebase Cloud Messaging</strong>: delivery of notifications.</li>
   <li><strong><span class="todo">[AI VIDEO PROVIDER]</span></strong> and <strong><span class="todo">[MODERATION PROVIDER]</span></strong>: see section 3.</li>
