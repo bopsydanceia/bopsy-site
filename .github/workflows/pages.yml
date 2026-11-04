@@ -1,0 +1,73 @@
+# Publishes bopsy-site to GitHub Pages (D116 adjusted): the landing, the
+# legal pages and the web app built from app/ under /app/.
+# The app is built in live mode when the three repository variables
+# VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_REVENUECAT_WEB_KEY are
+# set (Settings > Secrets and variables > Actions > Variables), in demo mode
+# otherwise. They are public keys (anon or publishable key, RevenueCat Web
+# Billing public key); the build refuses a secret key.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install
+        working-directory: app
+        run: npm ci
+
+      - name: Unit tests
+        working-directory: app
+        run: npm test
+
+      - name: Build the web app (live with the three variables, demo otherwise)
+        working-directory: app
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_REVENUECAT_WEB_KEY: ${{ vars.VITE_REVENUECAT_WEB_KEY }}
+        run: |
+          npm run build
+          npm run size
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp index.html style.css _site/
+          cp -r assets privacy terms support delete-data legal _site/
+          cp -r app/dist _site/app
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
