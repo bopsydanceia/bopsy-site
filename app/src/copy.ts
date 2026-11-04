@@ -91,7 +91,7 @@ export const t = {
   coinsComeBack: 'Your coins come back automatically.', // commonCoinsComeBack
 
   signInTitle: 'Where should we send your video?', // NEW
-  signInBody: "Enter your email. We'll send you a 6-digit code. Use the same email in the Bopsy app to find your videos and coins.", // NEW
+  signInBody: "Enter your email. We'll send you a 6-digit code. Your videos and coins stay with this email.", // NEW
   emailLabel: 'Email', // NEW
   sendCode: 'Send code', // NEW
   codeTitle: 'Enter your code', // NEW
