@@ -66,7 +66,7 @@ Reste à faire côté serveur et tableau de bord (rien de cela n'est dans ce dé
 - **Supabase** : projet de dev (migrations et Edge Functions de la branche `main` du dépôt de l'app, déploiement décrit dans `supabase/functions/README.md`), réglages ci-dessus ; clé anon ou publishable pour `VITE_SUPABASE_ANON_KEY`.
 - **RevenueCat Web Billing** relié à un compte **Stripe** : produits web aux mêmes identifiants (`bopsy_weekly` avec la période d'introduction 7,99 $ pendant 2 semaines, `bopsy_yearly`, `bopsy_coins_600`, `bopsy_coins_1500`), entitlement `pro`, offering courante avec les deux plans (les packs dans la même offering ou une autre), clé publique Web Billing ; le webhook existant crédite `store = RC_BILLING`. Taxes (Stripe Tax), pays de vente (D115).
 - **Cloudflare Turnstile** (gratuit) : un widget en mode « Managed » (ou « Invisible »), noms d'hôte = domaine du site (`<user>.github.io` puis le domaine à soi ; `localhost` pour un essai local). Sa clé de site va dans `VITE_TURNSTILE_SITE_KEY` ; sa clé secrète dans Supabase (Authentication > Attack Protection, CAPTCHA Turnstile) et dans le secret `TURNSTILE_SECRET_KEY` des Edge Functions (le même widget peut servir aux deux, D132). Jamais la clé secrète dans ce dépôt ni dans une variable `VITE_`.
-- **Apple Pay et Google Pay** : le paiement s'affiche dans notre page ; Apple Pay demande d'enregistrer le domaine (fichier `/.well-known/apple-developer-merchantid-domain-association` à la racine du domaine, procédure Stripe ou RevenueCat à confirmer). Sur `https://<user>.github.io/bopsy-site/`, la racine appartient au dépôt `<user>.github.io` : prévoir un domaine à soi.
+- **Apple Pay et Google Pay** : le paiement s'affiche dans notre page ; Apple Pay demande d'enregistrer le domaine (fichier `/.well-known/apple-developer-merchantid-domain-association` à la racine du domaine, procédure Stripe ou RevenueCat à confirmer). Le site est sur `bopsyia.com` : le fichier se dépose dans `.well-known/` à la racine de ce dépôt, le workflow le publie.
 
 ### Mesures (Lighthouse 13.6, mobile, 4G simulée, `vite build` + `vite preview`, mode démo)
 
@@ -102,7 +102,7 @@ Le dépôt de l'app restera privé ; GitHub Pages n'est gratuit que pour un dép
 
 Adresses obtenues (remplacer `<user>` par le compte GitHub) :
 
-- `https://<user>.github.io/bopsy-site/` (landing) et `https://<user>.github.io/bopsy-site/app/` (web app)
-- `https://<user>.github.io/bopsy-site/terms/`, `.../privacy/`, `.../support/`
+- `https://bopsyia.com/` (landing) et `https://bopsyia.com/app/` (web app), domaine à soi branché sur GitHub Pages (fichier `CNAME`)
+- `https://bopsyia.com/terms/`, `.../privacy/`, `.../support/`
 
 Elles vont dans le build de l'app iOS (`--dart-define=TERMS_URL=…`, `PRIVACY_URL=…`, `SUPPORT_URL=…`), dans App Store Connect (Privacy Policy URL, Support URL) et dans la description. Un domaine à soi peut s'ajouter plus tard (Settings > Pages > Custom domain) : changer alors les trois valeurs, `ALLOWED_ORIGINS` (et `ALLOWED_WEB_ORIGINS` s'il est posé), les Redirect URLs de Supabase et les noms d'hôte du widget Turnstile.

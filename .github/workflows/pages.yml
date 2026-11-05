@@ -59,7 +59,9 @@ jobs:
       - name: Assemble the site
         run: |
           mkdir -p _site
-          cp index.html style.css _site/
+          cp index.html style.css CNAME _site/
+          # Domain checks served from the root of bopsyia.com (Apple Pay merchant domain, D142).
+          if [ -d .well-known ]; then cp -r .well-known _site/; fi
           cp -r assets privacy terms support delete-data legal _site/
           cp -r app/dist _site/app
 
@@ -75,6 +77,8 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
+          # .well-known is a hidden folder: keep it in the published site.
+          include-hidden-files: true
 
   deploy:
     needs: build
