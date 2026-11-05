@@ -1,5 +1,5 @@
-// The flow controller (D113): dance → photo → consent and check → free
-// preview → email → paywall → generation. Side effects go through the
+// The flow controller (D113, D139): dance → photo → consent and check →
+// preparing → locked video → paywall → email → checkout → generation. Side effects go through the
 // Backend port; the screens only call these methods and read the store.
 import {
   canStart,
@@ -25,7 +25,7 @@ import { restoreDraft, saveDraft } from './draft';
 import { createStore, uuid, type Store } from './store';
 import type { Account, Dance, PhotoCheckResult, Session, StartResult, UploadedPhoto } from './types';
 
-export type PrimaryAction = 'generate' | 'preview' | 'unlock';
+export type PrimaryAction = 'generate' | 'preview' | 'make';
 
 /** C4: a subscriber spends plan then bought coins; without a plan, bought coins only. */
 export function canAfford(account: Account | null, cost: number): boolean {
@@ -38,10 +38,21 @@ export function previewPaused(flow: FlowState, now: number): boolean {
   return flow.previewPause !== null && now < flow.previewPause.until;
 }
 
-/** What the main button of a checked photo does. */
-export function primaryAction(flow: FlowState, session: Session | null, account: Account | null, cost: number, now = Date.now()): PrimaryAction {
+/**
+ * What the main button of a checked photo does: Generate for a buyer with
+ * enough coins; else the free preview when it is on (D130) and still
+ * available; else "Make my video" (D139: preparing, then the paywall).
+ */
+export function primaryAction(
+  flow: FlowState,
+  session: Session | null,
+  account: Account | null,
+  cost: number,
+  now = Date.now(),
+  freePreview = false,
+): PrimaryAction {
   if (session && !session.guest && canAfford(account, cost)) return 'generate';
-  return flow.previewUsed || previewPaused(flow, now) ? 'unlock' : 'preview';
+  return freePreview && !flow.previewUsed && !previewPaused(flow, now) ? 'preview' : 'make';
 }
 
 export interface FlowDeps {
@@ -184,14 +195,38 @@ export class Flow {
     this.onRefusal(result);
   }
 
-  /** "Unlock full video": the email is asked here only (D110), then the paywall or the video. */
+  /** "Make my video" (D139): the preparing screen, which waits for the photo check. */
+  prepare(): void {
+    this.set((state) => ({ ...state, notice: null }));
+    this.deps.navigate('/ready');
+  }
+
+  /**
+   * "Unlock my video": a guest sees the paywall first, the email is asked
+   * after a plan is picked (D139); a signed-in buyer goes on to the video or
+   * the paywall.
+   */
   async unlock(): Promise<void> {
     const session = this.deps.backend.auth.current();
     if (!session || session.guest) {
-      this.deps.navigate('/unlock');
+      this.deps.navigate('/paywall');
       return;
     }
     await this.continueSignedIn(false);
+  }
+
+  /** A guest picked a plan: kept while the email is asked, then the checkout opens by itself. */
+  holdCheckout(productId: string, waiver: boolean): void {
+    this.set((state) => ({ ...state, checkout: { productId, waiver } }));
+    // Replaces the paywall: after the code, the paywall comes back in its place and Back goes to the locked video.
+    this.deps.navigate('/unlock', { replace: true });
+  }
+
+  /** The held checkout, taken once (the paywall opens it). */
+  takeCheckout(): FlowState['checkout'] {
+    const checkout = this.state.checkout;
+    if (checkout) this.set((state) => ({ ...state, checkout: null }));
+    return checkout;
   }
 
   /**
@@ -220,7 +255,11 @@ export class Flow {
       return;
     }
     const account = await this.deps.backend.account();
-    if (canAfford(account, dance.cost)) await this.generate();
+    if (canAfford(account, dance.cost)) {
+      // An account that already has the coins: no checkout needed.
+      this.set((state) => ({ ...state, checkout: null }));
+      await this.generate();
+    }
     else this.deps.navigate('/paywall', { replace: true });
   }
 

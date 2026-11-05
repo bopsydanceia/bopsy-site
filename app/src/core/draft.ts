@@ -15,6 +15,7 @@ export const initialFlow: FlowState = {
   notice: null,
   busy: null,
   previewPause: null,
+  checkout: null,
 };
 
 const DRAFT_KEY = 'bopsy.flow.v1';
@@ -26,6 +27,7 @@ interface Draft {
   previewId: string | null;
   previewUsed: boolean;
   generation: FlowState['generation'];
+  checkout?: FlowState['checkout'];
 }
 
 export function saveDraft(state: FlowState): void {
@@ -36,6 +38,7 @@ export function saveDraft(state: FlowState): void {
     previewId: state.previewId,
     previewUsed: state.previewUsed,
     generation: state.generation,
+    checkout: state.checkout,
   };
   safeStorage.set(DRAFT_KEY, JSON.stringify(draft));
 }
@@ -53,6 +56,7 @@ export function restoreDraft(): FlowState {
       previewId: draft.previewId,
       previewUsed: draft.previewUsed === true,
       generation: draft.generation ?? null,
+      checkout: draft.checkout && typeof draft.checkout.productId === 'string' ? { productId: draft.checkout.productId, waiver: draft.checkout.waiver === true } : null,
     };
   } catch {
     return initialFlow;

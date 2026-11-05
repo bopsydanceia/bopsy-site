@@ -2,7 +2,8 @@
 // subscribers; prices and the launch offer only from RevenueCat (D112);
 // renewal terms, Terms and Privacy; the withdrawal waiver for EU buyers
 // (D115); the checkout drawn in the page; then the video starts (coins
-// debited by the server).
+// debited by the server). D139: a guest sees it first; Continue keeps the
+// pick, asks the email, and the checkout then opens by itself.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { LINKS } from '../../config';
 import { t } from '../../copy';
@@ -96,11 +97,11 @@ export function PaywallScreen() {
   const canGenerate = flowState.photo.kind === 'accepted' && dance !== undefined;
 
   useEffect(() => {
-    if (!session || session.guest) navigate('/unlock', { replace: true });
+    if (!session) navigate('/unlock', { replace: true });
   }, [session]);
 
   useEffect(() => {
-    if (!session || session.guest) return;
+    if (!session) return;
     let alive = true;
     setState(pw.initialPaywall);
     services
@@ -125,16 +126,31 @@ export function PaywallScreen() {
     setState((s) => ({ ...s, status: s.status === 'activating' ? 'ready' : s.status }));
   };
 
-  const buy = async () => {
-    const item = pw.selectedItem(state);
-    if (!session || !item || !pw.canContinue(state) || !host.current) return;
+  const buy = async (current: pw.PaywallState = state) => {
+    const item = pw.selectedItem(current);
+    if (!session || !item || !pw.canContinue(current) || !host.current) return;
+    if (session.guest) {
+      flow.holdCheckout(item.productId, current.waiverChecked);
+      return;
+    }
     setState((s) => ({ ...s, status: 'buying', error: null }));
     const billing = await services.billing();
-    const outcome = await billing.purchase(session, item, { email: session.email, target: host.current, metadata: pw.purchaseMetadata(state, new Date()) });
+    const outcome = await billing.purchase(session, item, { email: session.email, target: host.current, metadata: pw.purchaseMetadata(current, new Date()) });
     host.current?.replaceChildren();
     if (outcome.kind === 'purchased') await afterPurchase();
     else setState((s) => ({ ...s, status: 'ready', error: outcome.kind === 'failed' ? 'purchase_failed' : null }));
   };
+
+  // Back from the email step with a held pick: the checkout opens by itself, once.
+  useEffect(() => {
+    if (state.status !== 'ready' || !state.offer || !session || session.guest || !flowState.checkout) return;
+    const held = flow.takeCheckout();
+    if (!held || !pw.itemsOf(state).some((item) => item.productId === held.productId)) return;
+    let next = pw.select(state, held.productId);
+    if (next.waiverRequired) next = pw.setWaiver(next, held.waiver);
+    setState(next);
+    if (pw.canContinue(next)) void buy(next);
+  }, [state.status, session?.userId, session?.guest]);
 
   const items: OfferItem[] = pw.itemsOf(state);
   const plans = state.offer?.plans ?? [];

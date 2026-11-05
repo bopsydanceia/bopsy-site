@@ -38,6 +38,11 @@ export interface AuthPort {
   /** Sends the 6-digit code (and the magic link) to [email] (live: a CAPTCHA token when it signs in). */
   sendCode(email: string): Promise<SendCodeResult>;
   verifyCode(email: string, code: string): Promise<VerifyCodeResult>;
+  /**
+   * The news box of the email step (D139), unticked by default: kept on the
+   * signed-in account with its date and text version (live: user metadata).
+   */
+  saveNewsletterChoice(optIn: boolean): Promise<void>;
   signOut(): Promise<void>;
 }
 

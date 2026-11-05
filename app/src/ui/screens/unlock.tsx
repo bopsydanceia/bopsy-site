@@ -6,7 +6,7 @@ import { t } from '../../copy';
 import { navigate } from '../../core/router';
 import * as otp from '../../core/otp';
 import { app } from '../app-state';
-import { Header } from '../components';
+import { Checkbox, Header } from '../components';
 import { useNow } from '../hooks';
 
 function errorText(error: otp.OtpError): string {
@@ -28,6 +28,7 @@ export function UnlockScreen() {
   const { backend } = app().services;
   const [state, setState] = useState<otp.OtpState>(() => ({ ...otp.initialOtp, email: backend.auth.current()?.email ?? '' }));
   const now = useNow(1000);
+  const [news, setNews] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -56,6 +57,8 @@ export function UnlockScreen() {
       codeRef.current?.focus();
       return;
     }
+    // The news box (D139): saved only when ticked; never blocks the purchase.
+    if (news) void backend.auth.saveNewsletterChoice(true).catch(() => undefined);
     const flow = app().flow;
     if (flow.state.photo.kind === 'accepted' && flow.state.danceSlug) await flow.continueSignedIn(result.userChanged);
     else navigate('/account', { replace: true });
@@ -93,6 +96,9 @@ export function UnlockScreen() {
               />
             </div>
             {state.error && <p id="otp-error" class="error-text" role="alert">{errorText(state.error)}</p>}
+            <Checkbox id="newsletter" checked={news} onChange={setNews}>
+              {t.newsletter}
+            </Checkbox>
             <div class="cta-bar">
               <button type="submit" class="btn btn-cta btn-block" disabled={state.busy} aria-busy={state.busy}>
                 {state.busy ? '…' : t.sendCode}

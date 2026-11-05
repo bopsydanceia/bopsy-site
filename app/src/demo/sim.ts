@@ -14,6 +14,7 @@
 // preview-off       start-preview answers 503 preview_unavailable
 // generation-limit  start-generation answers 429 (paid videos per hour)
 // report-limit      reports answer 429 PT429 (reports per day)
+// free-preview      the free 2 s preview button comes back (off on the site since D139; read by config.ts)
 
 export const SIMULATIONS = [
   'check-limit',
@@ -27,6 +28,7 @@ export const SIMULATIONS = [
   'preview-off',
   'generation-limit',
   'report-limit',
+  'free-preview',
 ] as const;
 
 export type Simulation = (typeof SIMULATIONS)[number];

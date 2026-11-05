@@ -62,6 +62,16 @@ export interface FlowState {
   notice: Notice | null;
   busy: 'preview' | 'generation' | null;
   previewPause: PreviewPause | null;
+  /**
+   * The plan or pack picked on the paywall by a guest (D139): kept while the
+   * email is asked, then its checkout opens by itself.
+   */
+  checkout: PendingCheckout | null;
+}
+
+export interface PendingCheckout {
+  productId: string;
+  waiver: boolean;
 }
 
 /** The flow before anything is picked (kept in draft.ts, which the first screen loads). */
@@ -165,6 +175,15 @@ export function photoNeedsRecheck(state: FlowState): FlowState {
 /** Preview and Generate need a checked photo and the box ticked. */
 export function canStart(state: FlowState): boolean {
   return state.photo.kind === 'accepted' && state.consent && state.consentAt !== null && state.danceSlug !== null && state.busy === null;
+}
+
+/**
+ * "Make my video" (D139): the box ticked and the photo sent or being checked.
+ * The preparing screen waits for the check; a refusal sends back here.
+ */
+export function canPrepare(state: FlowState): boolean {
+  const photo = state.photo.kind;
+  return state.consent && state.danceSlug !== null && state.busy === null && (photo === 'sending' || photo === 'accepted');
 }
 
 /** Make another (C11): same checked photo, another dance, the box to tick again. */

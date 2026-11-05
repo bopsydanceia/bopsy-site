@@ -1,5 +1,5 @@
 // The whole demo flow in a phone-sized Chrome (D113): dance, photo,
-// consent, check, free preview, email code, paywall, simulated checkout,
+// consent, check, preparing, locked video, paywall, email code, simulated checkout (D139),
 // generation, result, report, Make another, My videos, account, sign out.
 import { expect, test, type Page } from '@playwright/test';
 
@@ -7,6 +7,14 @@ const SHOTS = process.env.BOPSY_SHOTS; // folder for step screenshots (optional)
 
 async function shot(page: Page, name: string) {
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` });
+}
+
+/** Videos the demo server made (none before payment, D139). */
+async function storedVideos(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const raw = sessionStorage.getItem('bopsy.demo.v1');
+    return raw ? Object.keys((JSON.parse(raw) as { videos?: object }).videos ?? {}).length : 0;
+  });
 }
 
 /** Photos the demo server stored (sessionStorage), to prove nothing left before the consent. */
@@ -32,39 +40,49 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   const consent = page.getByLabel("This is me, or I have this person's permission to use their photo.");
   await expect(consent).not.toBeChecked();
   await expect(page.getByText('Your photo is sent to our AI partners to check it and make your video.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Generate free preview' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Make my video' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Generate free preview' })).toHaveCount(0); // D139: off
   expect(await storedPhotos(page)).toBe(0); // D50: nothing sent before the box
   await shot(page, '03-consent');
   await consent.check();
   await expect(page.getByText('Full body detected')).toBeVisible();
   expect(await storedPhotos(page)).toBe(1);
   await shot(page, '04-checked');
-  await page.getByRole('button', { name: 'Generate free preview' }).click();
+  await page.getByRole('button', { name: 'Make my video' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Your free preview' })).toBeVisible();
-  await expect(page.getByText('PREVIEW · 2 S')).toBeVisible({ timeout: 20_000 });
-  await expect(page.locator('.watermark')).toHaveText('bopsy');
-  await shot(page, '05-preview');
-  await page.getByRole('button', { name: /Unlock full video/ }).click();
+  // About 10 s of preparing, then the locked video; nothing is generated before payment.
+  await expect(page.getByRole('heading', { name: 'Getting your dance ready' })).toBeVisible();
+  await expect(page.getByRole('progressbar')).toBeVisible();
+  await shot(page, '05-preparing');
+  await expect(page.getByRole('heading', { name: 'Your video is one tap away' })).toBeVisible({ timeout: 15_000 });
+  expect(await storedVideos(page)).toBe(0);
+  await shot(page, '05b-locked');
+  await page.getByRole('button', { name: 'Unlock my video' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Where should we send your video?' })).toBeVisible();
-  await page.getByLabel('Email').fill('dancer@example.com');
-  await page.getByRole('button', { name: 'Send code' }).click();
-  const demo = page.getByTestId('demo-code');
-  await expect(demo).toBeVisible();
-  const code = ((await demo.textContent()) ?? '').replace(/\D/g, '');
-  expect(code).toHaveLength(6);
-  await shot(page, '06-code');
-  await page.getByLabel('6-digit code').fill(code);
-
+  // The paywall first, for a guest.
   await expect(page.getByRole('heading', { name: 'Unlock Bopsy' })).toBeVisible();
   await expect(page.getByText('LAUNCH OFFER')).toBeVisible();
   await expect(page.getByRole('radio', { name: /\$7\.99 \/ week/ })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: /\$79\.99 \/ year/ })).toContainText('Save 85%');
   await expect(page.getByLabel(/give up my 14-day right of withdrawal/)).toHaveCount(0); // US time zone
   await expect(page.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '../terms/');
-  await shot(page, '07-paywall');
+  await shot(page, '06-paywall');
   await page.getByRole('button', { name: 'Continue' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Where should we send your video?' })).toBeVisible();
+  const news = page.getByLabel('Email me when the iPhone app is out and when new dances drop.');
+  await expect(news).not.toBeChecked();
+  await news.check();
+  await page.getByLabel('Email', { exact: true }).fill('dancer@example.com');
+  await page.getByRole('button', { name: 'Send code' }).click();
+  const demo = page.getByTestId('demo-code');
+  await expect(demo).toBeVisible();
+  const code = ((await demo.textContent()) ?? '').replace(/\D/g, '');
+  expect(code).toHaveLength(6);
+  await shot(page, '07-code');
+  await page.getByLabel('6-digit code').fill(code);
+
+  // Back on the paywall, the checkout of the picked plan opens by itself.
   await expect(page.getByRole('dialog', { name: 'Demo checkout' })).toBeVisible();
   await shot(page, '08-checkout');
   await page.getByRole('button', { name: 'Pay $7.99' }).click();
@@ -116,13 +134,8 @@ test('demo: a refused photo shows its reason, an EU buyer sees the waiver', asyn
   await page.locator('input[type=file]').first().setInputFiles({ name: 'my-dog.png', mimeType: 'image/png', buffer: png });
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
   await expect(page.getByText('Full body detected')).toBeVisible();
-  await page.getByRole('button', { name: 'Generate free preview' }).click();
-  await expect(page.getByText('PREVIEW · 2 S')).toBeVisible({ timeout: 20_000 });
-  await page.getByRole('button', { name: /Unlock full video/ }).click();
-  await page.getByLabel('Email').fill('eu@example.com');
-  await page.getByRole('button', { name: 'Send code' }).click();
-  const code = ((await page.getByTestId('demo-code').textContent()) ?? '').replace(/\D/g, '');
-  await page.getByLabel('6-digit code').fill(code);
+  await page.getByRole('button', { name: 'Make my video' }).click();
+  await page.getByRole('button', { name: 'Unlock my video' }).click({ timeout: 15_000 });
   await expect(page.getByRole('heading', { name: 'Unlock Bopsy' })).toBeVisible();
   const waiver = page.getByLabel(/give up my 14-day right of withdrawal/);
   await expect(waiver).toBeVisible();
@@ -130,11 +143,18 @@ test('demo: a refused photo shows its reason, an EU buyer sees the waiver', asyn
   await waiver.check();
   await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled();
   await shot(page, '13-paywall-eu');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByLabel('Email', { exact: true }).fill('eu@example.com');
+  await page.getByRole('button', { name: 'Send code' }).click();
+  const code = ((await page.getByTestId('demo-code').textContent()) ?? '').replace(/\D/g, '');
+  await page.getByLabel('6-digit code').fill(code);
+  // The ticked waiver came along: the checkout opens by itself.
+  await expect(page.getByRole('dialog', { name: 'Demo checkout' })).toBeVisible();
   await context.close();
 });
 
 test('demo ?sim=: check limit then Try again, CAPTCHA refused then passed, report limit', async ({ page }) => {
-  await page.goto('./?sim=check-limit,captcha-preview,report-limit#/create/street-bounce');
+  await page.goto('./?sim=check-limit,captcha-preview,report-limit,free-preview#/create/street-bounce');
   await expect(page.getByRole('heading', { name: 'Create a dance' })).toBeVisible();
   await page.getByRole('button', { name: 'Man' }).click();
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
@@ -155,29 +175,29 @@ test('demo ?sim=: check limit then Try again, CAPTCHA refused then passed, repor
   await shot(page, '15-report-limit');
 });
 
-test('demo ?sim=: free previews limited per IP, then off; the main button becomes Unlock', async ({ page }) => {
-  await page.goto('./?sim=preview-limit#/create/street-bounce');
+test('demo ?sim=: free previews (when on) limited per IP, then off; the main button becomes Make my video', async ({ page }) => {
+  await page.goto('./?sim=preview-limit,free-preview#/create/street-bounce');
   await page.getByRole('button', { name: 'Man' }).click();
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
   await expect(page.getByText('Full body detected')).toBeVisible();
   await page.getByRole('button', { name: 'Generate free preview' }).click();
-  await expect(page.getByRole('heading', { name: 'Where should we send your video?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Unlock Bopsy' })).toBeVisible();
   await expect(page.getByText(/^Too many free previews from your connection today\. Try again in \d+ (min|h), or unlock the full video now\.$/)).toBeVisible();
   await shot(page, '16-preview-limit');
   await page.goBack();
-  await expect(page.getByRole('button', { name: 'Unlock full video' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Make my video' })).toBeEnabled();
 
   // A new visitor (no draft, no demo server state), previews switched off.
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
-  await page.goto('./?sim=preview-off#/create/hip-sway');
+  await page.goto('./?sim=preview-off,free-preview#/create/hip-sway');
   await page.reload();
   await page.getByRole('button', { name: 'Dog' }).click();
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
   await expect(page.getByText('Full body detected')).toBeVisible();
   await page.getByRole('button', { name: 'Generate free preview' }).click();
   await expect(page.getByText('Free previews are paused right now. Unlock the full video to make yours.')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Where should we send your video?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Unlock Bopsy' })).toBeVisible();
 });

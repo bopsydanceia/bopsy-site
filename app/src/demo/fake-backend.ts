@@ -161,6 +161,13 @@ export class FakeBackend implements Backend, AuthPort {
     return { ok: true, session: this.current()!, userChanged: before !== null && before.userId !== userId };
   }
 
+  async saveNewsletterChoice(optIn: boolean): Promise<void> {
+    const user = this.state.sessionUserId ? this.state.users[this.state.sessionUserId] : undefined;
+    if (!user || user.guest) return;
+    user.newsletter = optIn;
+    this.save();
+  }
+
   async signOut(): Promise<void> {
     this.setSession(null);
   }

@@ -4,7 +4,8 @@ import { DEMO_DANCES, DEMO_TIMING } from '../demo/data';
 import { DEMO_CHECK_LIMIT_SECONDS, DEMO_PREVIEW_URL_SECONDS, FakeBackend } from '../demo/fake-backend';
 import { readSimulations, type Simulation } from '../demo/sim';
 import { canAfford, Flow, PREVIEW_OFF_PAUSE_MS, previewPaused, primaryAction } from './flow';
-import { canRetryUpload, initialFlow } from './flow-state';
+import { canPrepare, canRetryUpload, initialFlow } from './flow-state';
+import { restoreDraft, saveDraft } from './draft';
 import type { Account, Session } from './types';
 
 const T0 = Date.parse('2026-11-04T10:00:00Z');
@@ -85,6 +86,8 @@ describe('preview, email, paywall, generation', () => {
     await flow.startPreview();
     expect(last()).toMatch(/^\/preview\//);
     await flow.unlock();
+    expect(last()).toBe('/paywall'); // D139: the paywall first, the email after a pick
+    flow.holdCheckout('bopsy_weekly', false);
     expect(last()).toBe('/unlock');
     const changed = await signIn('dancer@example.com');
     expect(changed).toBe(false);
@@ -138,7 +141,7 @@ describe('preview, email, paywall, generation', () => {
     await flow.startPreview();
     expect(flow.state.previewUsed).toBe(true);
     expect(flow.state.notice).toBe('preview_used');
-    expect(last()).toBe('/unlock');
+    expect(last()).toBe('/paywall');
   });
 
   test('a photo the server no longer knows is checked again', async () => {
@@ -194,11 +197,15 @@ describe('main button and C4', () => {
     expect(canAfford(null, 60)).toBe(false);
   });
 
-  test('free preview first, Generate for a paying account, Unlock once the preview is used', () => {
-    expect(primaryAction(initialFlow, null, null, 60)).toBe('preview');
-    expect(primaryAction(initialFlow, guest, account(180, 0, true), 60)).toBe('preview');
+  test('free preview first when it is on, Generate for a paying account, Make my video otherwise', () => {
+    const now = Date.now();
+    expect(primaryAction(initialFlow, null, null, 60, now, true)).toBe('preview');
+    expect(primaryAction(initialFlow, guest, account(180, 0, true), 60, now, true)).toBe('preview');
+    expect(primaryAction(initialFlow, user, account(180, 0, true), 60, now, true)).toBe('generate');
+    expect(primaryAction({ ...initialFlow, previewUsed: true }, user, account(0, 0, false), 60, now, true)).toBe('make');
+    // D139: the free preview is off by default.
+    expect(primaryAction(initialFlow, null, null, 60)).toBe('make');
     expect(primaryAction(initialFlow, user, account(180, 0, true), 60)).toBe('generate');
-    expect(primaryAction({ ...initialFlow, previewUsed: true }, user, account(0, 0, false), 60)).toBe('unlock');
   });
 });
 
@@ -264,9 +271,9 @@ describe('limits, CAPTCHA and refusals of the server (D130 to D132), through the
     expect(flow.state.notice).toEqual({ kind: 'rate_limited', action: 'preview', until });
     expect(flow.state.previewPause).toEqual({ reason: 'limit', until });
     expect(flow.state.previewUsed).toBe(false);
-    expect(last()).toBe('/unlock');
-    expect(primaryAction(flow.state, backend.auth.current(), null, 60, clock)).toBe('unlock');
-    expect(primaryAction(flow.state, backend.auth.current(), null, 60, until)).toBe('preview');
+    expect(last()).toBe('/paywall');
+    expect(primaryAction(flow.state, backend.auth.current(), null, 60, clock, true)).toBe('make');
+    expect(primaryAction(flow.state, backend.auth.current(), null, 60, until, true)).toBe('preview');
   });
 
   test('preview: switched off on the server, a pause of 10 min and the email; kept after a reset', async () => {
@@ -275,7 +282,7 @@ describe('limits, CAPTCHA and refusals of the server (D130 to D132), through the
     await flow.startPreview();
     expect(flow.state.notice).toBe('preview_off');
     expect(flow.state.previewPause).toEqual({ reason: 'off', until: clock + PREVIEW_OFF_PAUSE_MS });
-    expect(last()).toBe('/unlock');
+    expect(last()).toBe('/paywall');
     flow.reset();
     expect(previewPaused(flow.state, clock)).toBe(true);
   });
@@ -326,5 +333,59 @@ describe('the demo simulations (?sim=)', () => {
     const video = (await backend.video(previewId))!;
     expect(await backend.videoUrl(video)).toBeNull(); // never a download for a preview
     expect(await new FakeBackend({ now: () => clock }).previewUrl(previewId)).toBeNull(); // another visitor
+  });
+});
+
+describe('D139: nothing generated before payment, paywall before the email', () => {
+  test('Make my video needs the box and a photo sent or checked; it opens the preparing screen', async () => {
+    flow.selectDance('street-bounce');
+    flow.pickPhoto(...photoFile());
+    expect(canPrepare(flow.state)).toBe(false); // not sent yet
+    await flow.setConsent(true);
+    expect(canPrepare(flow.state)).toBe(true);
+    flow.prepare();
+    expect(last()).toBe('/ready');
+    expect(Object.values(backend.state.videos ?? {})).toHaveLength(0); // no preview, no video
+  });
+
+  test('a guest picks a plan, gives the email, the pick comes back once', async () => {
+    await checkedPhoto();
+    await flow.unlock();
+    expect(last()).toBe('/paywall');
+    flow.holdCheckout('bopsy_yearly', true);
+    expect(last()).toBe('/unlock');
+    expect(flow.state.checkout).toEqual({ productId: 'bopsy_yearly', waiver: true });
+    await flow.continueSignedIn(await signIn('new@example.com'));
+    expect(last()).toBe('/paywall');
+    expect(flow.takeCheckout()).toEqual({ productId: 'bopsy_yearly', waiver: true });
+    expect(flow.takeCheckout()).toBeNull();
+  });
+
+  test('an email that already has coins skips the checkout and starts the video', async () => {
+    await checkedPhoto();
+    await signIn('rich@example.com');
+    backend.recordPurchase('bopsy_weekly');
+    clock += DEMO_TIMING.webhookMs + 1; // the webhook has credited
+    await backend.auth.signOut();
+    flow = makeFlow();
+    await checkedPhoto();
+    flow.holdCheckout('bopsy_weekly', false);
+    await flow.continueSignedIn(await signIn('rich@example.com'));
+    expect(flow.state.checkout).toBeNull();
+    expect(last()).toMatch(/^\/generating\//);
+  });
+
+  test('the held pick survives a reload (magic link)', () => {
+    saveDraft({ ...initialFlow, checkout: { productId: 'bopsy_weekly', waiver: false } });
+    expect(restoreDraft().checkout).toEqual({ productId: 'bopsy_weekly', waiver: false });
+  });
+
+  test('the news box is kept on the signed-in account only', async () => {
+    await checkedPhoto();
+    await backend.auth.saveNewsletterChoice(true);
+    expect(backend.state.users[backend.auth.current()!.userId]!.newsletter).toBeUndefined(); // guest: nothing
+    await signIn('news@example.com');
+    await backend.auth.saveNewsletterChoice(true);
+    expect(backend.state.users[backend.auth.current()!.userId]!.newsletter).toBe(true);
   });
 });

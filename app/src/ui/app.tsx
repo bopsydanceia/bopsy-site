@@ -14,6 +14,7 @@ import { DancesScreen } from './screens/dances';
 const withFlow = <T,>(screen: Promise<T>): Promise<T> => Promise.all([screen, loadFlow()]).then(([module]) => module);
 const CreateScreen = lazyScreen(() => withFlow(import('./screens/create')).then((m) => m.CreateScreen));
 const PreviewScreen = lazyScreen(() => withFlow(import('./screens/preview')).then((m) => m.PreviewScreen));
+const ReadyScreen = lazyScreen(() => withFlow(import('./screens/ready')).then((m) => m.ReadyScreen));
 const UnlockScreen = lazyScreen(() => withFlow(import('./screens/unlock')).then((m) => m.UnlockScreen));
 const PaywallScreen = lazyScreen(() => withFlow(import('./screens/paywall')).then((m) => m.PaywallScreen));
 const GeneratingScreen = lazyScreen(() => withFlow(import('./screens/generating')).then((m) => m.GeneratingScreen));
@@ -23,7 +24,7 @@ const AccountScreen = lazyScreen(() => withFlow(import('./screens/account')).the
 
 /** Fetches the other screens once the first one is on screen. */
 export function preloadScreens(): void {
-  for (const screen of [CreateScreen, PreviewScreen, UnlockScreen, PaywallScreen, GeneratingScreen, ResultScreen, VideosScreen, AccountScreen]) {
+  for (const screen of [CreateScreen, ReadyScreen, PreviewScreen, UnlockScreen, PaywallScreen, GeneratingScreen, ResultScreen, VideosScreen, AccountScreen]) {
     void screen.preload().catch(() => undefined);
   }
 }
@@ -36,6 +37,8 @@ function Screen({ route }: { route: Route }) {
       return <CreateScreen slug={route.slug} />;
     case 'preview':
       return <PreviewScreen id={route.id} />;
+    case 'ready':
+      return <ReadyScreen />;
     case 'unlock':
       return <UnlockScreen />;
     case 'paywall':

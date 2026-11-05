@@ -84,6 +84,17 @@ export const t = {
   captchaFailed: "We couldn't confirm you're not a bot. Try again.", // NEW (D132)
   captchaTitle: "Quick check that you're not a bot", // NEW (D132, shown only when Turnstile asks for a tap)
   pickAnother: 'Pick another dance', // danceDetailPickAnother
+  makeVideo: 'Make my video', // NEW (D139)
+
+  preparingTitle: 'Getting your dance ready', // NEW (D139)
+  preparingSteps: ['Checking your photo', 'Lining up the dance moves', 'Setting up your video'], // NEW (D139)
+  teaserTitle: 'Your video is one tap away', // NEW (D139)
+  teaserBody: (dance: string, seconds: number, minutes: number) =>
+    `Unlock it and we make your ${seconds}-second ${dance} video in HD, no watermark. Ready about ${minutes} min later.`, // NEW (D139)
+  teaserPlayLabel: 'Locked video. Unlock it to make it.', // NEW (D139, a11y)
+  unlockMine: 'Unlock my video', // NEW (D139)
+  teaserNote: 'Made just for you once you unlock it.', // NEW (D139)
+  newsletter: 'Email me when the iPhone app is out and when new dances drop.', // NEW (D139, unticked by default)
 
   previewTitle: 'Your free preview', // previewTitle
   previewTag: (seconds: number) => `PREVIEW · ${seconds} S`, // previewTag

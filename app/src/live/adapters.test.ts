@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { CaptchaFailed } from '../core/ports';
 import type { Video } from '../core/types';
 import { functionFailure, storageFailure } from './errors';
-import { LiveAuth } from './live-auth';
+import { LiveAuth, NEWSLETTER_TEXT_VERSION } from './live-auth';
 import { CHECK_RETRY_MS, LiveBackend } from './live-backend';
 import type { CaptchaPort } from './turnstile';
 
@@ -359,5 +359,25 @@ describe('the parsers of the live answers', () => {
     expect(storageFailure({ status: 400, statusCode: '403', message: 'jwt expired' })).toBe('network');
     expect(storageFailure({ status: 500, statusCode: '500', message: 'Internal Server Error' })).toBe('network');
     expect(storageFailure(new TypeError('Failed to fetch'))).toBe('network');
+  });
+});
+
+describe('news box (D139)', () => {
+  test('saved in the user metadata with its date and text version; nothing for a guest', async () => {
+    const guestFake = fakeClient({ session: { id: GUEST, anonymous: true } });
+    const guest = live(guestFake);
+    await guest.auth.restore();
+    await guest.auth.saveNewsletterChoice(true);
+    expect(guestFake.calls.auth).toHaveLength(0);
+
+    const fake = fakeClient({ session: { id: GUEST, email: 'a@b.co', anonymous: false } });
+    const { auth } = live(fake);
+    await auth.restore();
+    await auth.saveNewsletterChoice(true);
+    expect(fake.calls.auth).toHaveLength(1);
+    const args = fake.calls.auth[0]!.args as { data: Record<string, unknown> };
+    expect(fake.calls.auth[0]!.method).toBe('updateUser');
+    expect(args.data).toMatchObject({ marketing_opt_in: true, marketing_text_version: NEWSLETTER_TEXT_VERSION });
+    expect(typeof args.data.marketing_opt_in_at).toBe('string');
   });
 });

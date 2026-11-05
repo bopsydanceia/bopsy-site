@@ -1,12 +1,13 @@
 // 2 and 3. Add a photo (tips, camera or gallery), then the consent box,
 // unchecked, with the AI notice right under it: nothing is uploaded before
 // the box is ticked (D50); then the check (checking, accepted, rejection
-// with its reason) and the main button (free preview, Generate, Unlock).
+// with its reason) and the main button (Generate for a buyer, else Make my
+// video, D139; the free preview only when it is on).
 import { useEffect } from 'preact/hooks';
-import { LINKS } from '../../config';
+import { FREE_PREVIEW, LINKS } from '../../config';
 import { rejectionText, t } from '../../copy';
 import { primaryAction } from '../../core/flow';
-import { canRetryUpload, canStart } from '../../core/flow-state';
+import { canPrepare, canRetryUpload, canStart } from '../../core/flow-state';
 import { stillLimited } from '../../core/limits';
 import type { Dance } from '../../core/types';
 import { app, danceBySlug } from '../app-state';
@@ -111,10 +112,10 @@ export function CreateScreen({ slug }: { slug: string }) {
 
   const photo = state.photo;
   const pick = (file: Blob, name: string) => flow.pickPhoto(file, name);
-  const action = primaryAction(state, session, account.status === 'ready' ? account.value : null, dance.cost, now);
-  const label = action === 'generate' ? t.generate(dance.cost) : action === 'preview' ? t.generateFreePreview : t.unlock;
-  const ready = canStart(state);
-  const run = () => (action === 'generate' ? flow.generate() : action === 'preview' ? flow.startPreview() : flow.unlock());
+  const action = primaryAction(state, session, account.status === 'ready' ? account.value : null, dance.cost, now, FREE_PREVIEW);
+  const label = action === 'generate' ? t.generate(dance.cost) : action === 'preview' ? t.generateFreePreview : t.makeVideo;
+  const ready = action === 'make' ? canPrepare(state) : canStart(state);
+  const run = () => (action === 'generate' ? flow.generate() : action === 'preview' ? flow.startPreview() : flow.prepare());
 
   return (
     <>

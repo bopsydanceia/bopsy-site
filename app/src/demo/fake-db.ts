@@ -7,7 +7,7 @@
 import type { GenerationRefusal, PhotoRejection, UploadFailure, Video } from '../core/types';
 import { DEMO_DANCES, DEMO_PRODUCTS, DEMO_TIMING, type DemoClip, type DemoProductId } from './data';
 
-export interface FakeUser { id: string; email: string | null; guest: boolean }
+export interface FakeUser { id: string; email: string | null; guest: boolean; newsletter?: boolean }
 export interface FakePhoto { id: string; userId: string; name: string; status: 'accepted' | 'rejected'; clip: DemoClip; erased: boolean }
 export interface FakeVideo extends Video {
   userId: string;

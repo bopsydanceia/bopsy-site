@@ -42,6 +42,13 @@ function sendError(error: AuthError): SendCodeResult {
   return { ok: false, error: 'network' };
 }
 
+/** Version of the news box text (copy.ts newsletter), stored with the choice. */
+export const NEWSLETTER_TEXT_VERSION = 'news-2026-11-05';
+
+export function newsletterMetadata(optIn: boolean, at: Date): Record<string, unknown> {
+  return { marketing_opt_in: optIn, marketing_opt_in_at: at.toISOString(), marketing_text_version: NEWSLETTER_TEXT_VERSION };
+}
+
 export interface LiveAuthDeps {
   /** supabase-js, loaded on demand (tests pass a fake client). */
   load?: () => Promise<SupabaseClient>;
@@ -163,6 +170,13 @@ export class LiveAuth implements AuthPort {
     } catch {
       return { ok: false, error: 'network' };
     }
+  }
+
+  /** D139: in the account's user metadata (raw_user_meta_data), with the date and the text version. */
+  async saveNewsletterChoice(optIn: boolean): Promise<void> {
+    if (!this.session || this.session.guest) return;
+    const client = await this.client();
+    await client.auth.updateUser({ data: newsletterMetadata(optIn, new Date()) });
   }
 
   async signOut(): Promise<void> {

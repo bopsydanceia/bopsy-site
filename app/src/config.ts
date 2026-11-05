@@ -19,6 +19,15 @@ export const KEYS: PublicKeys = {
 export const LIVE: boolean = __BOPSY_LIVE__;
 export const DEMO = !LIVE;
 
+/**
+ * The free 2 s preview (D130) is off on the site (D139: nothing is generated
+ * before payment). VITE_FREE_PREVIEW=1 at build turns it back on; in demo
+ * mode, ?sim=free-preview too.
+ */
+export const FREE_PREVIEW: boolean =
+  String(env.VITE_FREE_PREVIEW ?? '') === '1' ||
+  (DEMO && typeof location !== 'undefined' && /(^|,)free-preview(,|$)/.test(new URLSearchParams(location.search).get('sim') ?? ''));
+
 /** Public pages of bopsy-site, next to app/ (D106). */
 export const LINKS = {
   terms: '../terms/',

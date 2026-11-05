@@ -135,8 +135,11 @@ test('live adapters: catalogue, consent, guest with CAPTCHA, check limit, previe
   await control({ reportLimit: false });
 
   // The guest becomes the email account: updateUser, no CAPTCHA.
+  // D139: Unlock opens the paywall first (RevenueCat is cut off here); the email step directly.
   await page.getByRole('button', { name: /Unlock full video/ }).click();
-  await page.getByLabel('Email').fill('dancer@example.com');
+  await expect(page.getByRole('heading', { name: 'Unlock Bopsy' })).toBeVisible();
+  await page.goto('./#/unlock');
+  await page.getByLabel('Email', { exact: true }).fill('dancer@example.com');
   await page.getByRole('button', { name: 'Send code' }).click();
   await expect(page.getByRole('heading', { name: 'Enter your code' })).toBeVisible();
   await expect(page.getByTestId('demo-code')).toHaveCount(0);
@@ -167,7 +170,7 @@ test('live adapters: Send code with a CAPTCHA (refused once, retried), then the 
   const start = (await mockLog()).length;
 
   await page.goto('./#/unlock');
-  await page.getByLabel('Email').fill('rich@example.com');
+  await page.getByLabel('Email', { exact: true }).fill('rich@example.com');
   await control({ authCaptchaFailOnce: true });
   await page.getByRole('button', { name: 'Send code' }).click();
   await expect(page.getByRole('heading', { name: 'Enter your code' })).toBeVisible();

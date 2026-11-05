@@ -6,6 +6,7 @@ export type Route =
   | { name: 'dances' }
   | { name: 'create'; slug: string }
   | { name: 'preview'; id: string }
+  | { name: 'ready' }
   | { name: 'unlock' }
   | { name: 'paywall' }
   | { name: 'generating'; id: string }
@@ -36,6 +37,7 @@ export function parseHash(hash: string): Route {
       return valid ? { name: 'generating', id } : { name: 'dances' };
     case 'video':
       return valid ? { name: 'video', id } : { name: 'dances' };
+    case 'ready':
     case 'unlock':
     case 'paywall':
     case 'videos':
