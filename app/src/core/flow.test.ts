@@ -1,9 +1,10 @@
 // The flow controller against the demo server, with a test clock.
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { DEMO_DANCES, DEMO_TIMING } from '../demo/data';
-import { FakeBackend } from '../demo/fake-backend';
-import { canAfford, Flow, primaryAction } from './flow';
-import { initialFlow } from './flow-state';
+import { DEMO_CHECK_LIMIT_SECONDS, DEMO_PREVIEW_URL_SECONDS, FakeBackend } from '../demo/fake-backend';
+import { readSimulations, type Simulation } from '../demo/sim';
+import { canAfford, Flow, PREVIEW_OFF_PAUSE_MS, previewPaused, primaryAction } from './flow';
+import { canRetryUpload, initialFlow } from './flow-state';
 import type { Account, Session } from './types';
 
 const T0 = Date.parse('2026-11-04T10:00:00Z');
@@ -198,5 +199,132 @@ describe('main button and C4', () => {
     expect(primaryAction(initialFlow, guest, account(180, 0, true), 60)).toBe('preview');
     expect(primaryAction(initialFlow, user, account(180, 0, true), 60)).toBe('generate');
     expect(primaryAction({ ...initialFlow, previewUsed: true }, user, account(0, 0, false), 60)).toBe('unlock');
+  });
+});
+
+describe('limits, CAPTCHA and refusals of the server (D130 to D132), through the demo simulations', () => {
+  function simulate(...names: Simulation[]): void {
+    backend = new FakeBackend({ now: () => clock, sleep: async () => undefined, random: () => 0.5, sim: new Set(names) });
+    flow = makeFlow();
+  }
+
+  test('check-photo 429: "too many checks" with the wait; Try again checks the same file, no new upload', async () => {
+    simulate('check-limit');
+    await checkedPhoto();
+    expect(flow.state.photo).toMatchObject({ kind: 'failed', failure: 'rate_limited' });
+    expect(flow.state.notice).toEqual({ kind: 'rate_limited', action: 'photo_check', until: clock + DEMO_CHECK_LIMIT_SECONDS * 1000 });
+    expect(Object.keys(backend.state.uploads)).toHaveLength(1);
+    const spy = vi.spyOn(backend, 'checkPhoto');
+    await flow.retryUpload();
+    expect(spy.mock.calls[0]![2]).toEqual({ photoPath: Object.keys(backend.state.uploads)[0], userId: backend.auth.current()!.userId });
+    expect(flow.state.photo.kind).toBe('accepted');
+    expect(Object.keys(backend.state.uploads)).toHaveLength(1);
+  });
+
+  test('a lost answer keeps the uploaded file for Try again, never for another photo', async () => {
+    await checkedPhoto('offline.jpg');
+    expect(flow.state.photo).toMatchObject({ kind: 'failed', failure: 'network' });
+    expect(flow.state.notice).toBe('upload_failed');
+    const spy = vi.spyOn(backend, 'checkPhoto');
+    await flow.retryUpload();
+    expect(spy.mock.calls[0]![2]?.photoPath).toBe(Object.keys(backend.state.uploads)[0]);
+    flow.pickPhoto(...photoFile('offline-2.jpg'));
+    await flow.setConsent(true);
+    expect(spy.mock.calls[1]![2]).toBeUndefined();
+  });
+
+  test('the bucket refuses: too large or wrong type (another photo needed), daily cap (until UTC midnight)', async () => {
+    await checkedPhoto('huge-toolarge.jpg');
+    expect(flow.state.photo).toMatchObject({ kind: 'failed', failure: 'too_large' });
+    expect(flow.state.notice).toBe('photo_too_large');
+    expect(canRetryUpload('too_large')).toBe(false);
+    await checkedPhoto('scan-badtype.jpg');
+    expect(flow.state.notice).toBe('photo_type');
+    expect(canRetryUpload('bad_type')).toBe(false);
+    await checkedPhoto('dailycap.jpg');
+    expect(flow.state.notice).toEqual({ kind: 'rate_limited', action: 'photo_upload', until: Date.parse('2026-11-05T00:00:00Z') });
+    expect(canRetryUpload('daily_cap')).toBe(true);
+  });
+
+  test('the guest session CAPTCHA refused: its own message, and Try again goes through', async () => {
+    simulate('captcha-photo');
+    await checkedPhoto();
+    expect(flow.state.photo).toMatchObject({ kind: 'failed', failure: 'captcha' });
+    expect(flow.state.notice).toBe('captcha_failed');
+    expect(backend.auth.current()).toBeNull();
+    await flow.retryUpload();
+    expect(flow.state.photo.kind).toBe('accepted');
+  });
+
+  test('preview: the IP limit pauses free previews until UTC midnight and sends to the email', async () => {
+    simulate('preview-limit');
+    await checkedPhoto();
+    await flow.startPreview();
+    const until = Date.parse('2026-11-05T00:00:00Z');
+    expect(flow.state.notice).toEqual({ kind: 'rate_limited', action: 'preview', until });
+    expect(flow.state.previewPause).toEqual({ reason: 'limit', until });
+    expect(flow.state.previewUsed).toBe(false);
+    expect(last()).toBe('/unlock');
+    expect(primaryAction(flow.state, backend.auth.current(), null, 60, clock)).toBe('unlock');
+    expect(primaryAction(flow.state, backend.auth.current(), null, 60, until)).toBe('preview');
+  });
+
+  test('preview: switched off on the server, a pause of 10 min and the email; kept after a reset', async () => {
+    simulate('preview-off');
+    await checkedPhoto();
+    await flow.startPreview();
+    expect(flow.state.notice).toBe('preview_off');
+    expect(flow.state.previewPause).toEqual({ reason: 'off', until: clock + PREVIEW_OFF_PAUSE_MS });
+    expect(last()).toBe('/unlock');
+    flow.reset();
+    expect(previewPaused(flow.state, clock)).toBe(true);
+  });
+
+  test('preview: the CAPTCHA refused twice is a message on the page; the next tap starts it', async () => {
+    simulate('captcha-preview');
+    await checkedPhoto();
+    await flow.startPreview();
+    expect(flow.state.notice).toBe('captcha_failed');
+    expect(routes).toEqual([]);
+    await flow.startPreview();
+    expect(last()).toMatch(/^\/preview\//);
+  });
+
+  test('generation: the hourly limit shows its wait and stops the post-purchase retries (D122)', async () => {
+    simulate('generation-limit');
+    await checkedPhoto();
+    await signIn('dancer@example.com');
+    backend.recordPurchase('bopsy_weekly');
+    const spy = vi.spyOn(backend, 'startGeneration');
+    await flow.generate({ afterPurchase: true });
+    expect(spy).toHaveBeenCalledOnce();
+    expect(flow.state.notice).toEqual({ kind: 'rate_limited', action: 'generation', until: Date.parse('2026-11-04T11:00:00Z') });
+    expect(flow.state.busy).toBeNull();
+    expect(flow.state.generation).toBeNull();
+    expect(routes.filter((route) => route.startsWith('/generating'))).toEqual([]);
+  });
+});
+
+describe('the demo simulations (?sim=)', () => {
+  test('read from the address, unknown names ignored', () => {
+    expect([...readSimulations('?sim=preview-off, report-limit,nope')]).toEqual(['preview-off', 'report-limit']);
+    expect(readSimulations('').size).toBe(0);
+  });
+
+  test('reports, Send code, previews: the server answers simulated, the happy path unchanged without', async () => {
+    backend = new FakeBackend({ now: () => clock, sleep: async () => undefined, random: () => 0.5, sim: new Set(['report-limit', 'captcha-code']) });
+    flow = makeFlow();
+    await checkedPhoto();
+    await flow.startPreview();
+    const previewId = last()!.split('/').pop()!;
+    clock += DEMO_TIMING.previewMs;
+    expect(await backend.report(previewId, 'other', '')).toEqual({ kind: 'rate_limited', action: 'report', retryAfter: 14 * 3600 - 6 });
+    expect(await backend.sendCode('a@b.co')).toEqual({ ok: false, error: 'captcha' });
+    expect(await backend.sendCode('a@b.co')).toMatchObject({ ok: true });
+    const link = await backend.previewUrl(previewId);
+    expect(link).toMatchObject({ url: expect.stringMatching(/preview\.mp4$/), expiresAt: clock + DEMO_PREVIEW_URL_SECONDS * 1000 });
+    const video = (await backend.video(previewId))!;
+    expect(await backend.videoUrl(video)).toBeNull(); // never a download for a preview
+    expect(await new FakeBackend({ now: () => clock }).previewUrl(previewId)).toBeNull(); // another visitor
   });
 });

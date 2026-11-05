@@ -184,6 +184,10 @@ export function PaywallScreen() {
             <button type="button" class="link" onClick={() => void flow.generate({ afterPurchase: true })}>{t.tryAgain}</button>
           </div>
         )}
+        {/* Other notices of the flow here too, e.g. the hourly limit after a purchase (D131). */}
+        {flowState.notice && flowState.notice !== 'plan_activating' && state.status !== 'activating' && (
+          <div class="message" role="alert">{noticeText(flowState.notice)}</div>
+        )}
         <div class="cta-bar">
           <button type="button" class="btn btn-cta btn-block" disabled={!pw.canContinue(state) || working} aria-busy={working} onClick={() => void buy()}>
             {working ? (state.status === 'activating' ? t.activating : '…') : selected?.kind === 'pack' ? t.buyCoins(selected.coins) : t.continue}

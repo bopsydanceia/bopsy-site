@@ -1,6 +1,7 @@
 // Interface texts. Wording taken from the app (lib/l10n/app_en.arb of the
 // Flutter repo, key in the comment); lines marked NEW are web-only texts in
 // the same tone, to validate (same rule as D04).
+import type { LimitedAction } from './core/limits';
 import type { GenerationRefusal, PhotoRejection, ReportReason } from './core/types';
 
 const number = new Intl.NumberFormat('en-US');
@@ -71,10 +72,17 @@ export const t = {
   recheck: 'We need to check your photo again. Check the box to send it.', // createReadyRecheck
   photoGone: 'This photo is no longer available. Add a new one.', // createReadyPhotoGone
   planActivating: 'Your plan is being activated. Try again in a moment.', // createReadyPlanActivating
+  generationLimited: (wait: string) => `You've reached the hourly video limit. Try again in ${wait}. No coins were used.`, // NEW (D131)
   rendering: (count: number) => `${videosCount(count)} rendering`, // createReadyTooManyInProgress
   generateFreePreview: 'Generate free preview', // createPreviewGenerate
   generate: (cost: number) => `Generate · ${coins(cost)}`, // createGenerate
   danceUnavailable: "This dance isn't available anymore.", // danceDetailNotFound
+  photoTooLarge: 'This photo is too large (10 MB max). Choose another one.', // NEW (D131)
+  photoType: "This file type isn't supported. Use a JPEG, PNG, WebP or HEIC photo.", // NEW (D131)
+  uploadCap: (wait: string) => `You've added a lot of photos today. Try again in ${wait}.`, // NEW (D131, photos per day)
+  checkLimited: (wait: string) => `Too many photo checks. Try again in ${wait}.`, // NEW (D131, check-photo per hour)
+  captchaFailed: "We couldn't confirm you're not a bot. Try again.", // NEW (D132)
+  captchaTitle: "Quick check that you're not a bot", // NEW (D132, shown only when Turnstile asks for a tap)
   pickAnother: 'Pick another dance', // danceDetailPickAnother
 
   previewTitle: 'Your free preview', // previewTitle
@@ -85,6 +93,8 @@ export const t = {
   unlock: 'Unlock full video', // previewUnlock
   unlockSubtitle: (minutes: number) => `HD · no watermark · ready in about ${minutes} min`, // previewUnlockSubtitle
   previewUsed: 'You already used your free preview.', // NEW (previewAlreadyUsed without "on this device")
+  previewOff: 'Free previews are paused right now. Unlock the full video to make yours.', // NEW (D130, previews off)
+  previewLimited: (wait: string) => `Too many free previews from your connection today. Try again in ${wait}, or unlock the full video now.`, // NEW (D130, per IP)
   previewFailed: "Your preview didn't render. Unlock the full video to try again.", // previewFailedBody
   previewFailedNoBody: "We couldn't see the whole body in this photo. Unlock the full video and try another photo.", // previewFailedNoFullBody
   videoFailedQ: 'Video failed?', // commonVideoFailedQuestion
@@ -173,6 +183,7 @@ export const t = {
   reportSubmit: 'Send report', // resultReportSubmit
   reportThanks: "Thanks for letting us know. We'll take a look.", // resultReportThanks
   reportFailed: "We couldn't send your report. Try again.", // resultReportFailed
+  reportLimited: (wait: string) => `You reached today's report limit. Try again in ${wait}.`, // NEW (D131)
 
   myVideos: 'My videos', // myVideosTitle
   tileRendering: (dance: string) => `${dance} · rendering`, // myVideosTileRendering
@@ -233,3 +244,19 @@ export const refusalText: Partial<Record<GenerationRefusal, string>> = {
   dance_unavailable: t.danceUnavailable,
   preview_already_used: t.previewUsed,
 };
+
+/** The text of a server limit (D131) with its wait ("12 min", "3 h"). */
+export function limitText(action: LimitedAction, wait: string): string {
+  switch (action) {
+    case 'generation':
+      return t.generationLimited(wait);
+    case 'photo_check':
+      return t.checkLimited(wait);
+    case 'photo_upload':
+      return t.uploadCap(wait);
+    case 'preview':
+      return t.previewLimited(wait);
+    case 'report':
+      return t.reportLimited(wait);
+  }
+}

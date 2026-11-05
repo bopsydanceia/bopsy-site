@@ -1,5 +1,7 @@
 // 4. The free preview (20 on the web): a 2 s 480p clip with the bopsy
-// watermark over it, the report flag, and "Unlock full video".
+// watermark over it, the report flag, and "Unlock full video". It plays
+// from a short signed URL renewed before it expires or when the player
+// fails (preview-url, D130); no download, no controls.
 import { useState } from 'preact/hooks';
 import { t } from '../../copy';
 import { canAfford } from '../../core/flow';
@@ -9,7 +11,7 @@ import { ErrorState, Header, Loading } from '../components';
 import { useLoad, useNow, useStore } from '../hooks';
 import { Icon } from '../icons';
 import { ReportSheet } from '../report-sheet';
-import { usePhotoUrl, useVideo, useVideoUrl } from '../video-hooks';
+import { usePhotoUrl, usePreviewLink, useVideo } from '../video-hooks';
 
 export function PreviewScreen({ id }: { id: string }) {
   const [load, retry] = useVideo(id);
@@ -20,7 +22,7 @@ export function PreviewScreen({ id }: { id: string }) {
   const [seconds, setSeconds] = useState(2);
   const [reporting, setReporting] = useState(false);
   const video = load.status === 'ok' ? load.video : null;
-  const url = useVideoUrl(video);
+  const [link, player] = usePreviewLink(video);
   const photoUrl = usePhotoUrl(video?.photoId ?? null);
   const [account] = useLoad(() => (session && !session.guest ? app().services.backend.account() : Promise.resolve(null)), [session?.userId, session?.guest]);
   const dance = video ? danceById(video.danceId) : undefined;
@@ -45,18 +47,23 @@ export function PreviewScreen({ id }: { id: string }) {
     <>
       <Header title={t.previewTitle} back={back} right={<span />} />
       <main>
-        {video.status === 'ready' && url ? (
+        {video.status === 'ready' && (link.status === 'error' || link.status === 'missing') ? (
+          <ErrorState text={link.status === 'missing' ? t.unavailable : t.videoLoadError} retry={link.status === 'error' ? player.retry : undefined} />
+        ) : video.status === 'ready' && link.status === 'ready' ? (
           <div class="player">
             <video
-              src={url}
+              src={link.link.url}
+              poster={link.link.thumbnailUrl ?? undefined}
               autoplay
               muted
               loop
               playsInline
               disablePictureInPicture
-              controlsList="nodownload noplaybackrate"
+              controlsList="nodownload noplaybackrate noremoteplayback"
               onContextMenu={(event) => event.preventDefault()}
               onLoadedMetadata={(event) => setSeconds(Math.max(1, Math.round((event.target as HTMLVideoElement).duration)))}
+              onPlaying={player.onPlaying}
+              onError={player.onError}
               aria-label="Preview of your photo dancing"
             />
             <div class="watermark" aria-hidden="true">bopsy</div>
@@ -72,9 +79,11 @@ export function PreviewScreen({ id }: { id: string }) {
         ) : (
           <div class="player" aria-busy="true">
             {photoUrl && <img src={photoUrl} alt="" style={{ opacity: 0.5 }} />}
-            <div class="watermark" style={{ transform: 'none', fontSize: '22px', color: 'var(--text)' }} role="status">
-              {t.previewMaking}… {progress}%
-            </div>
+            {video.status !== 'ready' && (
+              <div class="watermark" style={{ transform: 'none', fontSize: '22px', color: 'var(--text)' }} role="status">
+                {t.previewMaking}… {progress}%
+              </div>
+            )}
           </div>
         )}
         {video.status !== 'failed' && (

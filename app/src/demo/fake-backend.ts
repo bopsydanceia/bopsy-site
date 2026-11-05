@@ -1,12 +1,27 @@
 // Backend and AuthPort over the demo server (fake-db.ts). The state is kept
 // in sessionStorage so a reload keeps the demo; Realtime is a ticker that
-// settles the clock and tells the watchers what changed.
+// settles the clock and tells the watchers what changed. The server's
+// refusals (limits, CAPTCHA, previews off) are simulated on demand (sim.ts).
+import { secondsToUtcMidnight } from '../core/limits';
 import type { AuthPort, Backend, SendCodeResult, VerifyCodeResult } from '../core/ports';
 import { browserToken, uuid } from '../core/store';
 import { isValidEmail, normalizeEmail } from '../core/otp';
-import type { Account, Dance, PhotoCheckResult, ReportReason, Session, StartResult, Video, Wallet } from '../core/types';
-import { clipUrl, DEMO_DANCES, DEMO_SAMPLES, DEMO_TIMING, sampleUrl, type DemoProductId } from './data';
+import type {
+  Account,
+  Dance,
+  PhotoCheckResult,
+  PreviewLink,
+  ReportReason,
+  ReportResult,
+  Session,
+  StartResult,
+  UploadedPhoto,
+  Video,
+  Wallet,
+} from '../core/types';
+import { clipUrl, DEMO_DANCES, DEMO_SAMPLES, DEMO_TIMING, sampleUrl, type DemoClip, type DemoProductId } from './data';
 import * as db from './fake-db';
+import type { Simulation } from './sim';
 
 export interface FakeOptions {
   now?: () => number;
@@ -15,7 +30,14 @@ export interface FakeOptions {
   /** Keep the demo across reloads (sessionStorage). */
   persist?: boolean;
   tickMs?: number;
+  /** Refusals of the server to show (?sim=, sim.ts). */
+  sim?: ReadonlySet<Simulation>;
 }
+
+/** Lifetime of the demo's preview links, as preview_url_seconds. */
+export const DEMO_PREVIEW_URL_SECONDS = 120;
+/** check-photo's hourly limit, as the demo says it. */
+export const DEMO_CHECK_LIMIT_SECONDS = 12 * 60;
 
 const STORAGE_KEY = 'bopsy.demo.v1';
 
@@ -35,12 +57,23 @@ export class FakeBackend implements Backend, AuthPort {
   private readonly sessionListeners = new Set<(session: Session | null) => void>();
   private readonly tickers = new Set<() => void>();
   private timer: ReturnType<typeof setInterval> | null = null;
+  private readonly sim: ReadonlySet<Simulation>;
+  /** Simulations that refuse once, then let the retry through. */
+  private readonly spent = new Set<string>();
 
   constructor(private readonly options: FakeOptions = {}) {
     this.now = options.now ?? Date.now;
     this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
     this.random = options.random ?? Math.random;
     this.state = (options.persist && this.load()) || db.emptyState();
+    this.sim = options.sim ?? new Set();
+  }
+
+  /** True the first time [key] is asked while [simulation] is on. */
+  private once(simulation: Simulation, key: string = simulation): boolean {
+    if (!this.sim.has(simulation) || this.spent.has(key)) return false;
+    this.spent.add(key);
+    return true;
   }
 
   private load(): db.FakeState | null {
@@ -101,6 +134,7 @@ export class FakeBackend implements Backend, AuthPort {
   async sendCode(email: string): Promise<SendCodeResult> {
     await this.sleep(600);
     if (!isValidEmail(email)) return { ok: false, error: 'invalid_email' };
+    if (this.once('captcha-code')) return { ok: false, error: 'captcha' };
     const code = String(Math.floor(this.random() * 900_000) + 100_000);
     this.state.codes[normalizeEmail(email)] = code;
     this.save();
@@ -141,18 +175,43 @@ export class FakeBackend implements Backend, AuthPort {
     return DEMO_TIMING.estimatedMinutes;
   }
 
-  async checkPhoto(_file: Blob, fileName: string): Promise<PhotoCheckResult> {
+  async checkPhoto(_file: Blob, fileName: string, uploaded?: UploadedPhoto): Promise<PhotoCheckResult> {
+    // The guest session needs a CAPTCHA token (D132): refused once with captcha-photo.
+    if (!this.current() && this.once('captcha-photo')) return { status: 'failed', reason: 'captcha' };
     const session = await this.ensureSession();
     await this.sleep(DEMO_TIMING.checkMs);
     const verdict = db.judgePhoto(fileName);
-    if ('rejection' in verdict) {
-      if (verdict.rejection === 'upload_failed') return { status: 'failed' };
-      return { status: 'rejected', reason: verdict.rejection };
+    const failure = 'failure' in verdict ? verdict.failure : null;
+    // The upload, under the bucket's rules (D131), unless the file is already there.
+    const known = uploaded && uploaded.userId === session.userId && this.state.uploads[uploaded.photoPath] ? uploaded.photoPath : null;
+    let path = known;
+    if (!path) {
+      if (failure === 'too_large' || this.sim.has('too-large')) return { status: 'failed', reason: 'too_large' };
+      if (failure === 'bad_type' || this.sim.has('bad-type')) return { status: 'failed', reason: 'bad_type' };
+      if (failure === 'daily_cap' || this.sim.has('upload-cap')) {
+        return { status: 'failed', reason: 'daily_cap', retryAfter: secondsToUtcMidnight(this.now()) };
+      }
+      path = `${session.userId}/${uuid()}.jpg`;
+      this.state.uploads[path] = { userId: session.userId, name: fileName };
+      this.save();
     }
+    const ref: UploadedPhoto = { photoPath: path, userId: session.userId };
+    // check-photo's hourly limit refuses once; Try again checks the same file.
+    const limited = failure === 'rate_limited' ? !this.spent.has(`limit:${path}`) : this.sim.has('check-limit') && !this.spent.has(`limit:${path}`);
+    if (limited) {
+      this.spent.add(`limit:${path}`);
+      return { status: 'failed', reason: 'rate_limited', retryAfter: DEMO_CHECK_LIMIT_SECONDS, uploaded: ref };
+    }
+    if (failure === 'network') return { status: 'failed', reason: 'network', uploaded: ref };
+    if ('rejection' in verdict) return { status: 'rejected', reason: verdict.rejection };
+    return { status: 'accepted', ...this.accept(session.userId, fileName, 'clip' in verdict ? verdict.clip : 'man') };
+  }
+
+  private accept(userId: string, fileName: string, clip: DemoClip): { photoId: string; userId: string } {
     const id = uuid();
-    this.state.photos[id] = { id, userId: session.userId, name: fileName, status: 'accepted', clip: verdict.clip, erased: false };
+    this.state.photos[id] = { id, userId, name: fileName, status: 'accepted', clip, erased: false };
     this.save();
-    return { status: 'accepted', photoId: id, userId: session.userId };
+    return { photoId: id, userId };
   }
 
   async photoUrl(photoId: string): Promise<string | null> {
@@ -176,6 +235,10 @@ export class FakeBackend implements Backend, AuthPort {
 
   async startPreview(request: { danceId: string; photoId: string; consentAt: string }): Promise<StartResult> {
     await this.sleep(400);
+    if (this.sim.has('preview-off')) return { kind: 'preview_unavailable' };
+    // The live adapter retries a refused token once: refused twice, then the visitor's next tap passes.
+    if (this.once('captcha-preview')) return { kind: 'captcha_failed' };
+    if (this.sim.has('preview-limit')) return { kind: 'rate_limited', action: 'preview', retryAfter: secondsToUtcMidnight(this.now()) };
     return this.start((userId) =>
       db.startPreview(this.state, { ...request, userId, now: this.now(), id: uuid(), deviceHash: browserToken(), ip: db.DEMO_IP }),
     );
@@ -183,6 +246,10 @@ export class FakeBackend implements Backend, AuthPort {
 
   async startGeneration(request: { danceId: string; photoId: string; consentAt: string; idempotencyKey: string }): Promise<StartResult> {
     await this.sleep(400);
+    if (this.sim.has('generation-limit')) {
+      // A fixed hour window (10:00 to 11:00 UTC): the wait runs to its end, nothing is debited.
+      return { kind: 'rate_limited', action: 'generation', retryAfter: Math.max(1, Math.ceil((3_600_000 - (this.now() % 3_600_000)) / 1000)) };
+    }
     return this.start((userId) =>
       db.startGeneration(this.state, { ...request, userId, now: this.now(), id: uuid(), key: request.idempotencyKey }),
     );
@@ -218,7 +285,15 @@ export class FakeBackend implements Backend, AuthPort {
 
   async videoUrl(video: Video): Promise<string | null> {
     const fake = this.state.videos[video.id];
-    return fake && fake.status === 'ready' ? clipUrl(fake.clip, fake.isPreview) : null;
+    return fake && fake.status === 'ready' && !fake.isPreview ? clipUrl(fake.clip, false) : null;
+  }
+
+  /** preview-url: the caller's ready preview only, a link that expires (D130). */
+  async previewUrl(videoId: string): Promise<PreviewLink | null> {
+    this.settle();
+    const fake = this.state.videos[videoId];
+    if (!fake || fake.userId !== this.current()?.userId || !fake.isPreview || fake.status !== 'ready') return null;
+    return { url: clipUrl(fake.clip, true), expiresAt: this.now() + DEMO_PREVIEW_URL_SECONDS * 1000, thumbnailUrl: null };
   }
 
   async account(): Promise<Account | null> {
@@ -250,14 +325,15 @@ export class FakeBackend implements Backend, AuthPort {
     });
   }
 
-  async report(videoId: string, reason: ReportReason, note: string): Promise<boolean> {
+  async report(videoId: string, reason: ReportReason, note: string): Promise<ReportResult> {
     await this.sleep(400);
     const userId = this.current()?.userId;
     const video = this.state.videos[videoId];
-    if (!userId || !video || video.userId !== userId) return false; // RLS: own videos only
+    if (!userId || !video || video.userId !== userId) return { kind: 'failed' }; // RLS: own videos only
+    if (this.sim.has('report-limit')) return { kind: 'rate_limited', action: 'report', retryAfter: secondsToUtcMidnight(this.now()) };
     this.state.reports.push({ userId, videoId, reason, note: note.trim() || null });
     this.save();
-    return true;
+    return { kind: 'sent' };
   }
 
   async deleteMedia(): Promise<boolean> {

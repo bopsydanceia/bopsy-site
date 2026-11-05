@@ -17,6 +17,8 @@ function errorText(error: otp.OtpError): string {
       return t.invalidCode;
     case 'rate_limited':
       return t.rateLimited;
+    case 'captcha':
+      return t.captchaFailed;
     case 'network':
       return t.offline;
   }

@@ -1,7 +1,8 @@
 // The create flow as pure state transitions, tested on their own: photo,
 // consent (D49, D50: nothing is sent before the box is checked), preview,
 // generation. The Flow controller (flow.ts) runs the side effects.
-import type { PhotoRejection } from './types';
+import type { LimitedAction } from './limits';
+import type { PhotoRejection, UploadFailure } from './types';
 
 export interface LocalPhoto {
   /** The picked file, kept in memory to send it again after a sign-in switch. */
@@ -17,7 +18,14 @@ export type PhotoState =
   | ({ kind: 'sending'; token: number } & LocalPhoto)
   | ({ kind: 'accepted'; photoId: string; userId: string } & LocalPhoto)
   | ({ kind: 'rejected'; reason: PhotoRejection } & LocalPhoto)
-  | ({ kind: 'failed' } & LocalPhoto);
+  | ({ kind: 'failed'; failure: UploadFailure } & LocalPhoto);
+
+/** A limit of the server, shown with its wait (until: epoch ms). */
+export interface LimitNotice {
+  kind: 'rate_limited';
+  action: LimitedAction;
+  until: number;
+}
 
 export type Notice =
   | 'consent_missing'
@@ -28,7 +36,18 @@ export type Notice =
   | 'dance_unavailable'
   | 'too_many'
   | 'plan_activating'
-  | 'error';
+  | 'preview_off'
+  | 'captcha_failed'
+  | 'photo_too_large'
+  | 'photo_type'
+  | 'error'
+  | LimitNotice;
+
+/** Free previews paused for this visitor: the IP limit of the day, or switched off on the server. */
+export interface PreviewPause {
+  reason: 'limit' | 'off';
+  until: number;
+}
 
 export interface FlowState {
   danceSlug: string | null;
@@ -42,6 +61,7 @@ export interface FlowState {
   generation: { key: string; videoId: string | null } | null;
   notice: Notice | null;
   busy: 'preview' | 'generation' | null;
+  previewPause: PreviewPause | null;
 }
 
 export const initialFlow: FlowState = {
@@ -54,6 +74,7 @@ export const initialFlow: FlowState = {
   generation: null,
   notice: null,
   busy: null,
+  previewPause: null,
 };
 
 function local(photo: PhotoState): LocalPhoto | null {
@@ -104,7 +125,30 @@ export function uploadStarted(state: FlowState, token: number): FlowState {
 export type CheckOutcome =
   | { status: 'accepted'; photoId: string; userId: string }
   | { status: 'rejected'; reason: PhotoRejection }
-  | { status: 'failed' };
+  | { status: 'failed'; reason: UploadFailure; until?: number | null };
+
+/** A failure the same file can get past later (Try again); too_large and bad_type need another photo. */
+export function canRetryUpload(failure: UploadFailure): boolean {
+  return failure !== 'too_large' && failure !== 'bad_type';
+}
+
+/** The notice of a failed upload or check. */
+export function uploadNotice(failure: UploadFailure, until: number | null | undefined): Notice {
+  switch (failure) {
+    case 'network':
+      return 'upload_failed';
+    case 'captcha':
+      return 'captcha_failed';
+    case 'too_large':
+      return 'photo_too_large';
+    case 'bad_type':
+      return 'photo_type';
+    case 'rate_limited':
+      return { kind: 'rate_limited', action: 'photo_check', until: until ?? 0 };
+    case 'daily_cap':
+      return { kind: 'rate_limited', action: 'photo_upload', until: until ?? 0 };
+  }
+}
 
 /** The answer of check-photo, ignored when the photo changed meanwhile. */
 export function uploadFinished(state: FlowState, token: number, outcome: CheckOutcome): FlowState {
@@ -116,7 +160,7 @@ export function uploadFinished(state: FlowState, token: number, outcome: CheckOu
     case 'rejected':
       return { ...state, photo: { kind: 'rejected', reason: outcome.reason, ...photo }, consent: false, consentAt: null };
     case 'failed':
-      return { ...state, photo: { kind: 'failed', ...photo }, notice: 'upload_failed' };
+      return { ...state, photo: { kind: 'failed', failure: outcome.reason, ...photo }, notice: uploadNotice(outcome.reason, outcome.until) };
   }
 }
 

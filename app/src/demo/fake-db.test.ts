@@ -44,9 +44,18 @@ describe('photo check by file name', () => {
     ['nsfw.jpg', 'unsafe_content'],
     ['landscape.jpg', 'no_subject'],
     ['horse.jpg', 'unsupported_subject'],
-    ['offline.jpg', 'upload_failed'],
   ])('%s is refused with %s', (name, code) => {
     expect(db.judgePhoto(name)).toEqual({ rejection: code });
+  });
+
+  test.each([
+    ['offline.jpg', 'network'],
+    ['huge-toolarge.heic', 'too_large'],
+    ['scan-badtype.tiff', 'bad_type'],
+    ['dailycap.jpg', 'daily_cap'],
+    ['checklimit-me.jpg', 'rate_limited'],
+  ])('%s fails before the moderation with %s', (name, failure) => {
+    expect(db.judgePhoto(name)).toEqual({ failure });
   });
 
   test.each([

@@ -13,14 +13,16 @@ import {
   uploadFinished,
   uploadStarted,
   withNotice,
+  type CheckOutcome,
   type FlowState,
   type Notice,
 } from './flow-state';
 import { prepareUpload } from './image';
+import type { RateLimited } from './limits';
 import type { Backend } from './ports';
 import type { Navigate } from './router';
 import { createStore, safeStorage, uuid, type Store } from './store';
-import type { Account, Dance, Session, StartResult } from './types';
+import type { Account, Dance, PhotoCheckResult, Session, StartResult, UploadedPhoto } from './types';
 
 export type PrimaryAction = 'generate' | 'preview' | 'unlock';
 
@@ -30,10 +32,15 @@ export function canAfford(account: Account | null, cost: number): boolean {
   return account.subscription?.active ? account.wallet.total >= cost : account.wallet.bought >= cost;
 }
 
+/** Free previews paused for this visitor (IP limit of the day, or off on the server). */
+export function previewPaused(flow: FlowState, now: number): boolean {
+  return flow.previewPause !== null && now < flow.previewPause.until;
+}
+
 /** What the main button of a checked photo does. */
-export function primaryAction(flow: FlowState, session: Session | null, account: Account | null, cost: number): PrimaryAction {
+export function primaryAction(flow: FlowState, session: Session | null, account: Account | null, cost: number, now = Date.now()): PrimaryAction {
   if (session && !session.guest && canAfford(account, cost)) return 'generate';
-  return flow.previewUsed ? 'unlock' : 'preview';
+  return flow.previewUsed || previewPaused(flow, now) ? 'unlock' : 'preview';
 }
 
 export interface FlowDeps {
@@ -50,10 +57,16 @@ const DRAFT_KEY = 'bopsy.flow.v1';
 /** After a purchase the webhook may lag: start-generation is retried this long (D49 "plan activating"). */
 export const ACTIVATION_WAIT_MS = 45_000;
 export const ACTIVATION_RETRY_MS = 2_500;
+/** Previews switched off on the server (503 preview_unavailable): asked again after this long. */
+export const PREVIEW_OFF_PAUSE_MS = 10 * 60_000;
 
 export class Flow {
   readonly store: Store<FlowState>;
   private uploadToken = 0;
+  /** The picked file as sent (2048 px JPEG), made once per photo. */
+  private prepared: { file: Blob; blob: Blob } | null = null;
+  /** The file already in the bucket after a failed check: check-photo is asked again without a new upload. */
+  private uploaded: { file: Blob; ref: UploadedPhoto } | null = null;
   private readonly now: () => Date;
   private readonly sleep: (ms: number) => Promise<void>;
 
@@ -85,6 +98,8 @@ export class Flow {
     if (previous.kind !== 'none' && previous.url?.startsWith('blob:')) URL.revokeObjectURL(previous.url);
     const url = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null;
     this.uploadToken++;
+    this.prepared = null;
+    this.uploaded = null;
     this.set((state) => choosePhoto(state, { file, name, url }));
   }
 
@@ -104,13 +119,31 @@ export class Flow {
     this.set((state) => uploadStarted(state, token));
     const photo = this.state.photo;
     if (photo.kind !== 'sending' || !photo.file) return;
-    let outcome: Awaited<ReturnType<Backend['checkPhoto']>>;
+    const file = photo.file;
+    const userId = this.deps.backend.auth.current()?.userId ?? null;
+    const uploaded = this.uploaded?.file === file && this.uploaded.ref.userId === userId ? this.uploaded.ref : undefined;
+    let outcome: PhotoCheckResult;
     try {
-      outcome = await this.deps.backend.checkPhoto(await prepareUpload(photo.file), photo.name);
+      if (this.prepared?.file !== file) this.prepared = { file, blob: await prepareUpload(file) };
+      outcome = await this.deps.backend.checkPhoto(this.prepared.blob, photo.name, uploaded);
     } catch {
-      outcome = { status: 'failed' };
+      outcome = { status: 'failed', reason: 'network' };
     }
-    this.set((state) => uploadFinished(state, token, outcome));
+    if (token !== this.uploadToken) return; // another photo meanwhile
+    this.uploaded = outcome.status === 'failed' && outcome.uploaded ? { file, ref: outcome.uploaded } : null;
+    const checked: CheckOutcome =
+      outcome.status === 'failed'
+        ? { status: 'failed', reason: outcome.reason, until: outcome.retryAfter ? this.until(outcome.retryAfter) : null }
+        : outcome;
+    this.set((state) => uploadFinished(state, token, checked));
+  }
+
+  private until(retryAfter: number): number {
+    return this.now().getTime() + retryAfter * 1000;
+  }
+
+  private limitNotice(result: RateLimited): Notice {
+    return { kind: 'rate_limited', action: result.action, until: this.until(result.retryAfter) };
   }
 
   private request(): { dance: Dance; photoId: string; consentAt: string } | null {
@@ -134,6 +167,15 @@ export class Flow {
     }
     if (result.kind === 'refused' && result.refusal === 'preview_already_used') {
       this.set((state) => ({ ...state, previewUsed: true, notice: 'preview_used' }));
+      await this.unlock();
+      return;
+    }
+    // No free preview for now (IP limit of the day, or off on the server): the full video instead.
+    if (result.kind === 'rate_limited' || result.kind === 'preview_unavailable') {
+      const limited = result.kind === 'rate_limited';
+      const until = limited ? this.until(result.retryAfter) : this.now().getTime() + PREVIEW_OFF_PAUSE_MS;
+      const notice: Notice = limited ? this.limitNotice(result) : 'preview_off';
+      this.set((state) => ({ ...state, previewPause: { reason: limited ? 'limit' : 'off', until }, notice }));
       await this.unlock();
       return;
     }
@@ -201,6 +243,11 @@ export class Flow {
         consentAt: request.consentAt,
         idempotencyKey: key,
       });
+      if (result.kind === 'rate_limited') {
+        // The hourly limit: nothing was debited, the post-purchase wait stops here.
+        this.set((state) => ({ ...state, busy: null, generation: null, notice: this.limitNotice(result) }));
+        return;
+      }
       if (result.kind === 'started') {
         // The box is unchecked after each start (D49); the photo stays for Make another.
         this.set((state) => ({ ...state, generation: { key, videoId: result.video.id }, busy: null, consent: false, consentAt: null }));
@@ -227,9 +274,21 @@ export class Flow {
   }
 
   private onRefusal(result: Exclude<StartResult, { kind: 'started' }>): void {
-    if (result.kind === 'failed') {
-      this.notice('error');
-      return;
+    switch (result.kind) {
+      case 'failed':
+        this.notice('error');
+        return;
+      case 'captcha_failed':
+        this.notice('captcha_failed');
+        return;
+      case 'preview_unavailable':
+        this.notice('preview_off');
+        return;
+      case 'rate_limited':
+        this.notice(this.limitNotice(result));
+        return;
+      case 'refused':
+        break;
     }
     switch (result.refusal) {
       case 'consent_missing':
@@ -271,7 +330,9 @@ export class Flow {
   /** Sign out or media deleted: nothing of the previous account stays in the flow. */
   reset(): void {
     this.uploadToken++;
-    this.store.set({ ...initialFlow, previewUsed: this.state.previewUsed });
+    this.prepared = null;
+    this.uploaded = null;
+    this.store.set({ ...initialFlow, previewUsed: this.state.previewUsed, previewPause: this.state.previewPause });
   }
 }
 

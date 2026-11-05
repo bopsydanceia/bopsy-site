@@ -6,7 +6,7 @@ import { useEffect } from 'preact/hooks';
 import { LINKS } from '../../config';
 import { rejectionText, t } from '../../copy';
 import { primaryAction } from '../../core/flow';
-import { canStart } from '../../core/flow-state';
+import { canRetryUpload, canStart } from '../../core/flow-state';
 import type { Dance } from '../../core/types';
 import { app, danceBySlug } from '../app-state';
 import { Checkbox, ErrorState, Header, Loading } from '../components';
@@ -109,7 +109,7 @@ export function CreateScreen({ slug }: { slug: string }) {
 
   const photo = state.photo;
   const pick = (file: Blob, name: string) => flow.pickPhoto(file, name);
-  const action = primaryAction(state, session, account.status === 'ready' ? account.value : null, dance.cost);
+  const action = primaryAction(state, session, account.status === 'ready' ? account.value : null, dance.cost, Date.now());
   const label = action === 'generate' ? t.generate(dance.cost) : action === 'preview' ? t.generateFreePreview : t.unlock;
   const ready = canStart(state);
   const run = () => (action === 'generate' ? flow.generate() : action === 'preview' ? flow.startPreview() : flow.unlock());
@@ -138,8 +138,10 @@ export function CreateScreen({ slug }: { slug: string }) {
                 {photo.kind === 'local' && t.notSent}
                 {photo.kind === 'sending' && t.checking}
                 {photo.kind === 'accepted' && (<><span class="ok-text"><Icon name="check" /></span>{t.fullBody}</>)}
-                {photo.kind === 'rejected' && (<><span class="error-text"><Icon name="alert" /></span>{t.cantUse}</>)}
-                {photo.kind === 'failed' && t.notSent}
+                {(photo.kind === 'rejected' || (photo.kind === 'failed' && !canRetryUpload(photo.failure))) && (
+                  <><span class="error-text"><Icon name="alert" /></span>{t.cantUse}</>
+                )}
+                {photo.kind === 'failed' && canRetryUpload(photo.failure) && t.notSent}
               </span>
               <label class="btn btn-secondary file-btn replace" style={{ minHeight: '44px', padding: '0 16px', fontSize: '15px' }}>
                 {t.replace}
@@ -166,9 +168,9 @@ export function CreateScreen({ slug }: { slug: string }) {
           </>
         )}
         {state.notice && (
-          <div class="message" role="alert">
+          <div class={photo.kind === 'failed' && !canRetryUpload(photo.failure) ? 'message error' : 'message'} role="alert">
             {noticeText(state.notice)}{' '}
-            {state.notice === 'upload_failed' && state.consent && (
+            {photo.kind === 'failed' && canRetryUpload(photo.failure) && state.consent && (
               <button type="button" class="link" onClick={() => void flow.retryUpload()}>{t.tryAgain}</button>
             )}
           </div>

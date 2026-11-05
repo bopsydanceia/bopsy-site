@@ -5,17 +5,20 @@ import type {
   Account,
   Dance,
   PhotoCheckResult,
+  PreviewLink,
   ReportReason,
+  ReportResult,
   Session,
   StartRequest,
   StartResult,
+  UploadedPhoto,
   Video,
   Wallet,
 } from './types';
 
 export type SendCodeResult =
   | { ok: true; demoCode?: string }
-  | { ok: false; error: 'invalid_email' | 'rate_limited' | 'network' };
+  | { ok: false; error: 'invalid_email' | 'rate_limited' | 'captcha' | 'network' };
 
 export type VerifyCodeResult =
   | { ok: true; session: Session; userChanged: boolean }
@@ -28,10 +31,11 @@ export interface AuthPort {
   subscribe(listener: (session: Session | null) => void): () => void;
   /**
    * The session that owns the photo before the email is known: the current
-   * one, or a new guest session (live: Supabase anonymous sign-in).
+   * one, or a new guest session (live: Supabase anonymous sign-in, with a
+   * CAPTCHA token). Throws CaptchaFailed when the CAPTCHA refuses.
    */
   ensureSession(): Promise<Session>;
-  /** Sends the 6-digit code (and the magic link) to [email]. */
+  /** Sends the 6-digit code (and the magic link) to [email] (live: a CAPTCHA token when it signs in). */
   sendCode(email: string): Promise<SendCodeResult>;
   verifyCode(email: string, code: string): Promise<VerifyCodeResult>;
   signOut(): Promise<void>;
@@ -51,8 +55,13 @@ export interface Backend {
   dances(): Promise<Dance[]>;
   /** app_config estimated_minutes (C21). */
   estimatedMinutes(): Promise<number>;
-  /** Uploads the photo of the session's folder and runs check-photo. */
-  checkPhoto(file: Blob, fileName: string): Promise<PhotoCheckResult>;
+  /**
+   * Uploads the photo into the session's folder and runs check-photo. With
+   * [uploaded] (a failed check of the same session), check-photo is asked
+   * again for that file without a new upload (the server answers a stored
+   * verdict for free).
+   */
+  checkPhoto(file: Blob, fileName: string, uploaded?: UploadedPhoto): Promise<PhotoCheckResult>;
   photoUrl(photoId: string): Promise<string | null>;
   startPreview(request: StartRequest): Promise<StartResult>;
   startGeneration(request: StartRequest & { idempotencyKey: string }): Promise<StartResult>;
@@ -60,12 +69,14 @@ export interface Backend {
   /** Realtime changes of one video (with a polling fallback). */
   watchVideo(id: string, listener: (video: Video) => void): () => void;
   videos(): Promise<Video[]>;
-  /** A playable URL of a ready video; [download] asks for an attachment named so. */
+  /** A playable URL of a ready paid video; [download] asks for an attachment named so. Null for a preview. */
   videoUrl(video: Video, download?: string): Promise<string | null>;
+  /** A short-lived URL of the caller's ready preview (preview-url), never a download; null when not found. */
+  previewUrl(videoId: string): Promise<PreviewLink | null>;
   account(): Promise<Account | null>;
   /** Realtime wallet of the signed-in user (null without a session). */
   watchWallet(listener: (wallet: Wallet | null) => void): () => void;
-  report(videoId: string, reason: ReportReason, note: string): Promise<boolean>;
+  report(videoId: string, reason: ReportReason, note: string): Promise<ReportResult>;
   deleteMedia(): Promise<boolean>;
 }
 
@@ -132,4 +143,13 @@ export interface Billing {
 export interface Services {
   backend: Backend;
   billing: () => Promise<Billing>;
+}
+
+/** The CAPTCHA (Turnstile) could not give a token, or the server refused it twice. */
+export class CaptchaFailed extends Error {
+  /** [detail]: a Turnstile error code or the server code, for logs (never a token). */
+  constructor(readonly detail?: string) {
+    super('captcha_failed');
+    this.name = 'CaptchaFailed';
+  }
 }

@@ -5,7 +5,8 @@
 export const CODE_LENGTH = 6;
 export const RESEND_AFTER_MS = 60_000;
 
-export type OtpError = 'invalid_email' | 'invalid_code' | 'rate_limited' | 'network';
+/** captcha: Turnstile gave no token or Supabase Auth refused it twice (D132). */
+export type OtpError = 'invalid_email' | 'invalid_code' | 'rate_limited' | 'captcha' | 'network';
 
 export interface OtpState {
   step: 'email' | 'code';

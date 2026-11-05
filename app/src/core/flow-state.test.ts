@@ -63,7 +63,7 @@ describe('consent gating', () => {
     const sending = uploadStarted(setConsent(picked(), true, now), 1);
     const rejected = uploadFinished(sending, 1, { status: 'rejected', reason: 'several_subjects' });
     expect(rejected.consent).toBe(false);
-    const failed = uploadFinished(sending, 1, { status: 'failed' });
+    const failed = uploadFinished(sending, 1, { status: 'failed', reason: 'network' });
     expect(failed.consent).toBe(true);
     expect(failed.notice).toBe('upload_failed');
     expect(needsUpload(failed)).toBe(true);

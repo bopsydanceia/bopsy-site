@@ -1,7 +1,7 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
-import { isLiveConfig, keyProblems, type PublicKeys } from './src/core/keys.ts';
+import { isLiveConfig, keyProblems, missingLiveKeys, type PublicKeys } from './src/core/keys.ts';
 
 /**
  * First screen speed (D108): the CSS (4 KB gzip) goes inline in index.html
@@ -42,9 +42,15 @@ export default defineConfig(({ mode }) => {
     supabaseUrl: env.VITE_SUPABASE_URL ?? '',
     supabaseAnonKey: env.VITE_SUPABASE_ANON_KEY ?? '',
     revenueCatWebKey: env.VITE_REVENUECAT_WEB_KEY ?? '',
+    turnstileSiteKey: env.VITE_TURNSTILE_SITE_KEY ?? '',
   };
-  // D114: a secret key never reaches a bundle.
+  // D114: a secret key never reaches a bundle. A live build needs all four
+  // variables (D132: no Turnstile site key, no guest session and no preview).
   const problems = keyProblems(keys);
+  const missing = missingLiveKeys(keys);
+  if (missing.length > 0 && mode !== 'test') {
+    problems.push(`live mode needs ${missing.join(', ')} (set all four live variables, or none for the demo)`);
+  }
   if (problems.length > 0) throw new Error(`Refusing to build: ${problems.join('; ')}`);
   const live = mode !== 'test' && isLiveConfig(keys);
 

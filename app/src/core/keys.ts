@@ -5,7 +5,17 @@ export interface PublicKeys {
   supabaseUrl: string;
   supabaseAnonKey: string;
   revenueCatWebKey: string;
+  /** Cloudflare Turnstile site key (D132): the CAPTCHA of Supabase Auth and of start-preview. */
+  turnstileSiteKey: string;
 }
+
+/** The build variables of live mode, all four needed. */
+export const LIVE_VARIABLES: ReadonlyArray<[keyof PublicKeys, string]> = [
+  ['supabaseUrl', 'VITE_SUPABASE_URL'],
+  ['supabaseAnonKey', 'VITE_SUPABASE_ANON_KEY'],
+  ['revenueCatWebKey', 'VITE_REVENUECAT_WEB_KEY'],
+  ['turnstileSiteKey', 'VITE_TURNSTILE_SITE_KEY'],
+];
 
 function jwtRole(token: string): string | null {
   const part = token.split('.')[1];
@@ -31,10 +41,25 @@ export function keyProblems(keys: PublicKeys): string[] {
   if (url && !/^https:\/\/[^/]+$/.test(url.replace(/\/+$/, '')) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url)) {
     problems.push('VITE_SUPABASE_URL must be the project origin (https://<ref>.supabase.co)');
   }
+  // Site keys are 24 characters (0x4AAAAAAA...), secret keys 35: the secret goes to Supabase and the functions only.
+  const site = keys.turnstileSiteKey.trim();
+  if (site && (site.length >= 30 || !/^[0-9]x[0-9A-Za-z_-]+$/.test(site))) {
+    problems.push('VITE_TURNSTILE_SITE_KEY must be the Turnstile site key (0x4AAAAAAA..., 24 characters), never the secret key');
+  }
   return problems;
 }
 
-/** Live mode needs all three values; any missing one means demo mode. */
+/**
+ * The live variables left empty while others are set: a live build with a
+ * missing key fails instead of silently becoming the demo. Empty list: all
+ * four set (live) or none (demo).
+ */
+export function missingLiveKeys(keys: PublicKeys): string[] {
+  const empty = LIVE_VARIABLES.filter(([field]) => !keys[field].trim()).map(([, name]) => name);
+  return empty.length === LIVE_VARIABLES.length ? [] : empty;
+}
+
+/** Live mode needs all four values; none of them means demo mode. */
 export function isLiveConfig(keys: PublicKeys): boolean {
-  return Boolean(keys.supabaseUrl.trim() && keys.supabaseAnonKey.trim() && keys.revenueCatWebKey.trim()) && keyProblems(keys).length === 0;
+  return LIVE_VARIABLES.every(([field]) => keys[field].trim() !== '') && keyProblems(keys).length === 0;
 }

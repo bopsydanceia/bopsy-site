@@ -4,7 +4,7 @@
 // browser and per IP), start_generation in the server's order (idempotency
 // key, consent, photo, dance, plan or C4, C7, balance), plan then bought
 // coins debited, refund of a failed video, RevenueCat webhook after a delay.
-import type { GenerationRefusal, PhotoRejection, Video } from '../core/types';
+import type { GenerationRefusal, PhotoRejection, UploadFailure, Video } from '../core/types';
 import { DEMO_DANCES, DEMO_PRODUCTS, DEMO_TIMING, type DemoClip, type DemoProductId } from './data';
 
 export interface FakeUser { id: string; email: string | null; guest: boolean }
@@ -37,21 +37,30 @@ export interface FakeState {
   reports: Array<{ userId: string; videoId: string; reason: string; note: string | null }>;
   codes: Record<string, string>;
   freePreviewEnabled: boolean;
+  /** Files in the photos bucket, by path: check-photo can be asked again without a new upload. */
+  uploads: Record<string, { userId: string; name: string }>;
 }
 
 export function emptyState(): FakeState {
   return {
     users: {}, sessionUserId: null, photos: {}, videos: {}, wallets: {}, subscriptions: {}, introUsed: [],
-    pending: [], devicePreviews: {}, ipPreviews: {}, reports: [], codes: {}, freePreviewEnabled: true,
+    pending: [], devicePreviews: {}, ipPreviews: {}, reports: [], codes: {}, freePreviewEnabled: true, uploads: {},
   };
 }
 
 /** The demo's one visitor address: per-IP limits apply to the whole demo. */
 export const DEMO_IP = '203.0.113.7';
 
-type Keyword = [RegExp, PhotoRejection | 'upload_failed'];
+/** Refusals before the moderation: the upload (bucket rules) or check-photo's own limit. */
+export type DemoFailure = Exclude<UploadFailure, 'captcha'>;
+
+type Keyword = [RegExp, PhotoRejection | DemoFailure];
 const KEYWORDS: Keyword[] = [
-  [/offline|uploadfail/, 'upload_failed'],
+  [/offline|uploadfail/, 'network'],
+  [/toolarge|too-large|huge/, 'too_large'],
+  [/badtype|bad-type/, 'bad_type'],
+  [/dailycap|daily-cap/, 'daily_cap'],
+  [/checklimit|check-limit/, 'rate_limited'],
   [/group|friends|couple|crowd|team/, 'several_subjects'],
   [/face|selfie|portrait|headshot|closeup/, 'body_not_visible'],
   [/kid|child|baby|toddler|teen/, 'looks_like_child'],
@@ -60,10 +69,14 @@ const KEYWORDS: Keyword[] = [
   [/horse|bird|parrot|rabbit|bunny|hamster|fish|snake|lizard|cow/, 'unsupported_subject'],
 ];
 
-/** The fake moderation: a rejection code, upload_failed, or accepted with its demo clip. */
-export function judgePhoto(fileName: string): { rejection: PhotoRejection | 'upload_failed' } | { clip: DemoClip } {
+const FAILURES: readonly string[] = ['network', 'too_large', 'bad_type', 'daily_cap', 'rate_limited'];
+
+/** The fake moderation: a failure before it, a rejection code, or accepted with its demo clip. */
+export function judgePhoto(fileName: string): { failure: DemoFailure } | { rejection: PhotoRejection } | { clip: DemoClip } {
   const name = fileName.toLowerCase();
-  for (const [pattern, rejection] of KEYWORDS) if (pattern.test(name)) return { rejection };
+  for (const [pattern, code] of KEYWORDS) {
+    if (pattern.test(name)) return FAILURES.includes(code) ? { failure: code as DemoFailure } : { rejection: code as PhotoRejection };
+  }
   if (/mamie|grandma|granny|nana/.test(name)) return { clip: 'mamie' };
   if (/dog|puppy|doggo/.test(name)) return { clip: 'dog' };
   if (/cat|kitten|kitty/.test(name)) return { clip: 'cat' };

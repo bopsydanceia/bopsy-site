@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { PreviewLinkKeeper, type PreviewLinkState } from '../core/preview-link';
 import type { Video } from '../core/types';
 import { app } from './app-state';
 
@@ -25,7 +26,7 @@ export function useVideo(id: string): [VideoLoad, () => void] {
   return [state, () => setRound((r) => r + 1)];
 }
 
-/** A playable URL of a ready video. */
+/** A playable URL of a ready paid video (a preview has none: usePreviewLink). */
 export function useVideoUrl(video: Video | null, download?: string): string | null {
   const [url, setUrl] = useState<string | null>(null);
   const ready = video?.status === 'ready';
@@ -54,4 +55,38 @@ export function usePhotoUrl(photoId: string | null): string | null {
     };
   }, [photoId, local]);
   return local ?? url;
+}
+
+export interface PreviewPlayer {
+  onError: () => void;
+  onPlaying: () => void;
+  retry: () => void;
+}
+
+/**
+ * The URL of a ready preview (preview-url), renewed before it expires and
+ * when the player fails on it (D130). Never a download.
+ */
+export function usePreviewLink(video: Video | null): [PreviewLinkState, PreviewPlayer] {
+  const [state, setState] = useState<PreviewLinkState>({ status: 'loading' });
+  const keeper = useRef<PreviewLinkKeeper | null>(null);
+  const ready = video?.status === 'ready' && video.isPreview;
+  useEffect(() => {
+    if (!video || !ready) return;
+    const current = new PreviewLinkKeeper(() => app().services.backend.previewUrl(video.id), setState);
+    keeper.current = current;
+    void current.start();
+    return () => {
+      current.stop();
+      keeper.current = null;
+    };
+  }, [video?.id, ready]);
+  return [
+    state,
+    {
+      onError: () => void keeper.current?.playerError(),
+      onPlaying: () => keeper.current?.playing(),
+      retry: () => void keeper.current?.retry(),
+    },
+  ];
 }

@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { demoOffer } from '../demo/fake-billing';
 import { isLikelyEuBuyer } from './eu';
-import { isLiveConfig, keyProblems } from './keys';
+import { isLiveConfig, keyProblems, missingLiveKeys } from './keys';
 import * as otp from './otp';
 import * as pw from './paywall';
 import { formatMoney, introWeeks, money, perWeek, planSubtitle, planTitle, renewalTerms, savePercent } from './prices';
@@ -167,13 +167,19 @@ describe('router', () => {
 });
 
 describe('public keys only (D114)', () => {
-  const base = { supabaseUrl: 'https://abcd.supabase.co', supabaseAnonKey: 'sb_publishable_x', revenueCatWebKey: 'rcb_x' };
+  const base = { supabaseUrl: 'https://abcd.supabase.co', supabaseAnonKey: 'sb_publishable_x', revenueCatWebKey: 'rcb_x', turnstileSiteKey: '0x4AAAAAAADnPIDROrmt1Wwj' };
   const jwt = (role: string) => `h.${btoa(JSON.stringify({ role })).replace(/=+$/, '')}.s`;
 
-  test('live only with the three values', () => {
+  test('live only with the four values; a live build missing one fails, none is the demo', () => {
     expect(isLiveConfig(base)).toBe(true);
     expect(isLiveConfig({ ...base, revenueCatWebKey: '' })).toBe(false);
-    expect(isLiveConfig({ supabaseUrl: '', supabaseAnonKey: '', revenueCatWebKey: '' })).toBe(false);
+    expect(isLiveConfig({ ...base, turnstileSiteKey: '' })).toBe(false);
+    const none = { supabaseUrl: '', supabaseAnonKey: '', revenueCatWebKey: '', turnstileSiteKey: '' };
+    expect(isLiveConfig(none)).toBe(false);
+    expect(missingLiveKeys(none)).toEqual([]);
+    expect(missingLiveKeys(base)).toEqual([]);
+    expect(missingLiveKeys({ ...base, turnstileSiteKey: ' ' })).toEqual(['VITE_TURNSTILE_SITE_KEY']);
+    expect(missingLiveKeys({ ...none, supabaseUrl: base.supabaseUrl })).toEqual(['VITE_SUPABASE_ANON_KEY', 'VITE_REVENUECAT_WEB_KEY', 'VITE_TURNSTILE_SITE_KEY']);
   });
 
   test('secret keys are refused', () => {
@@ -183,6 +189,9 @@ describe('public keys only (D114)', () => {
     expect(keyProblems({ ...base, supabaseAnonKey: 'sb_secret_x' })).toHaveLength(1);
     expect(keyProblems({ ...base, revenueCatWebKey: 'sk_live_x' })).toHaveLength(1);
     expect(keyProblems({ ...base, supabaseUrl: 'https://abcd.supabase.co/rest/v1' })).toHaveLength(1);
+    expect(keyProblems({ ...base, turnstileSiteKey: '1x00000000000000000000AA' })).toEqual([]); // Cloudflare test site key
+    expect(keyProblems({ ...base, turnstileSiteKey: '1x0000000000000000000000000000000AA' })).toHaveLength(1); // a secret key
+    expect(keyProblems({ ...base, turnstileSiteKey: 'not a key' })).toHaveLength(1);
   });
 });
 

@@ -195,6 +195,12 @@ textarea { width: 100%; min-height: 84px; padding: 12px; border-radius: 14px; bo
 .field input:focus { border-color: var(--accent); outline: none; }
 .code-input { letter-spacing: 0.4em; font-weight: 800; font-size: 26px !important; text-align: center; }
 .demo-code { margin: 12px 0 0; padding: 10px 14px; border-radius: 14px; background: rgba(255, 210, 63, 0.12); color: var(--coin); font-weight: 700; text-align: center; }
+/* Turnstile (D132): in the page but unseen until Cloudflare asks for a tap (never display:none, the widget must run) */
+.captcha { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; }
+.captcha.open { opacity: 1; pointer-events: auto; background: rgba(0, 0, 0, 0.55); }
+.captcha-sheet { width: 100%; max-width: 430px; display: grid; gap: 12px; justify-items: center; background: var(--surface); border-radius: 28px 28px 0 0; padding: 22px var(--gutter-r) calc(20px + env(safe-area-inset-bottom)) var(--gutter); }
+.captcha-title { margin: 0; font-weight: 700; text-align: center; }
+.captcha-slot { width: 100%; min-height: 1px; }
 .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; width: min(390px, calc(100% - 32px)); padding: 14px 16px; border-radius: 16px; background: var(--surface-2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); font-size: 15px; }
 
 /* Lists */
