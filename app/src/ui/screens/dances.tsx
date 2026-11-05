@@ -31,7 +31,7 @@ function DanceCard({ dance, eager }: { dance: Dance; eager: boolean }) {
 
 export function DancesScreen() {
   const catalog = useStore(app().catalog);
-  const flow = useStore(app().flow.store);
+  const flow = useStore(app().flowStore);
   const minutes = useStore(app().estimatedMinutes);
   const remake = flow.photo.kind === 'accepted';
   return (

@@ -36,8 +36,8 @@ export interface FakeOptions {
 
 /** Lifetime of the demo's preview links, as preview_url_seconds. */
 export const DEMO_PREVIEW_URL_SECONDS = 120;
-/** check-photo's hourly limit, as the demo says it. */
-export const DEMO_CHECK_LIMIT_SECONDS = 12 * 60;
+/** check-photo's limit in the demo: short, so its Try again shows while clicking through. */
+export const DEMO_CHECK_LIMIT_SECONDS = 10;
 
 const STORAGE_KEY = 'bopsy.demo.v1';
 

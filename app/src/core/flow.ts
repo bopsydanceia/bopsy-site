@@ -21,7 +21,8 @@ import { prepareUpload } from './image';
 import type { RateLimited } from './limits';
 import type { Backend } from './ports';
 import type { Navigate } from './router';
-import { createStore, safeStorage, uuid, type Store } from './store';
+import { restoreDraft, saveDraft } from './draft';
+import { createStore, uuid, type Store } from './store';
 import type { Account, Dance, PhotoCheckResult, Session, StartResult, UploadedPhoto } from './types';
 
 export type PrimaryAction = 'generate' | 'preview' | 'unlock';
@@ -49,11 +50,12 @@ export interface FlowDeps {
   dance: (slug: string) => Dance | undefined;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
+  /** The app's flow store (app-state.ts, restored and saved there); else one made here. */
+  store?: Store<FlowState>;
   /** Default false in tests: no localStorage draft. */
   persist?: boolean;
 }
 
-const DRAFT_KEY = 'bopsy.flow.v1';
 /** After a purchase the webhook may lag: start-generation is retried this long (D49 "plan activating"). */
 export const ACTIVATION_WAIT_MS = 45_000;
 export const ACTIVATION_RETRY_MS = 2_500;
@@ -73,8 +75,8 @@ export class Flow {
   constructor(private readonly deps: FlowDeps) {
     this.now = deps.now ?? (() => new Date());
     this.sleep = deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
-    this.store = createStore<FlowState>(deps.persist ? restoreDraft() : initialFlow);
-    if (deps.persist) this.store.subscribe(saveDraft);
+    this.store = deps.store ?? createStore<FlowState>(deps.persist ? restoreDraft() : initialFlow);
+    if (deps.persist && !deps.store) this.store.subscribe(saveDraft);
   }
 
   get state(): FlowState {
@@ -333,46 +335,5 @@ export class Flow {
     this.prepared = null;
     this.uploaded = null;
     this.store.set({ ...initialFlow, previewUsed: this.state.previewUsed, previewPause: this.state.previewPause });
-  }
-}
-
-interface Draft {
-  danceSlug: string | null;
-  photo: { photoId: string; userId: string; name: string } | null;
-  consentAt: string | null;
-  previewId: string | null;
-  previewUsed: boolean;
-  generation: FlowState['generation'];
-}
-
-/** What survives a reload or a magic link (never the photo itself). */
-function saveDraft(state: FlowState): void {
-  const draft: Draft = {
-    danceSlug: state.danceSlug,
-    photo: state.photo.kind === 'accepted' ? { photoId: state.photo.photoId, userId: state.photo.userId, name: state.photo.name } : null,
-    consentAt: state.consent ? state.consentAt : null,
-    previewId: state.previewId,
-    previewUsed: state.previewUsed,
-    generation: state.generation,
-  };
-  safeStorage.set(DRAFT_KEY, JSON.stringify(draft));
-}
-
-function restoreDraft(): FlowState {
-  try {
-    const draft = JSON.parse(safeStorage.get(DRAFT_KEY) ?? 'null') as Draft | null;
-    if (!draft) return initialFlow;
-    return {
-      ...initialFlow,
-      danceSlug: draft.danceSlug,
-      photo: draft.photo ? { kind: 'accepted', ...draft.photo, file: null, url: null } : { kind: 'none' },
-      consent: draft.photo !== null && draft.consentAt !== null,
-      consentAt: draft.photo ? draft.consentAt : null,
-      previewId: draft.previewId,
-      previewUsed: draft.previewUsed === true,
-      generation: draft.generation ?? null,
-    };
-  } catch {
-    return initialFlow;
   }
 }

@@ -3,21 +3,23 @@
 // chunk; the other screens load in idle time just after it.
 import { useEffect } from 'preact/hooks';
 import { routeStore, type Route } from '../core/router';
-import { app, showToast } from './app-state';
+import { app, loadFlow, showToast } from './app-state';
 import { Loading, Toast } from './components';
 import { useStore } from './hooks';
 import { lazyScreen } from './lazy';
 import { noticeText } from './notices';
 import { DancesScreen } from './screens/dances';
 
-const CreateScreen = lazyScreen(() => import('./screens/create').then((m) => m.CreateScreen));
-const PreviewScreen = lazyScreen(() => import('./screens/preview').then((m) => m.PreviewScreen));
-const UnlockScreen = lazyScreen(() => import('./screens/unlock').then((m) => m.UnlockScreen));
-const PaywallScreen = lazyScreen(() => import('./screens/paywall').then((m) => m.PaywallScreen));
-const GeneratingScreen = lazyScreen(() => import('./screens/generating').then((m) => m.GeneratingScreen));
-const ResultScreen = lazyScreen(() => import('./screens/result').then((m) => m.ResultScreen));
-const VideosScreen = lazyScreen(() => import('./screens/videos').then((m) => m.VideosScreen));
-const AccountScreen = lazyScreen(() => import('./screens/account').then((m) => m.AccountScreen));
+/** A screen after the catalogue: its chunk and the flow controller, loaded together. */
+const withFlow = <T,>(screen: Promise<T>): Promise<T> => Promise.all([screen, loadFlow()]).then(([module]) => module);
+const CreateScreen = lazyScreen(() => withFlow(import('./screens/create')).then((m) => m.CreateScreen));
+const PreviewScreen = lazyScreen(() => withFlow(import('./screens/preview')).then((m) => m.PreviewScreen));
+const UnlockScreen = lazyScreen(() => withFlow(import('./screens/unlock')).then((m) => m.UnlockScreen));
+const PaywallScreen = lazyScreen(() => withFlow(import('./screens/paywall')).then((m) => m.PaywallScreen));
+const GeneratingScreen = lazyScreen(() => withFlow(import('./screens/generating')).then((m) => m.GeneratingScreen));
+const ResultScreen = lazyScreen(() => withFlow(import('./screens/result')).then((m) => m.ResultScreen));
+const VideosScreen = lazyScreen(() => withFlow(import('./screens/videos')).then((m) => m.VideosScreen));
+const AccountScreen = lazyScreen(() => withFlow(import('./screens/account')).then((m) => m.AccountScreen));
 
 /** Fetches the other screens once the first one is on screen. */
 export function preloadScreens(): void {
@@ -53,7 +55,7 @@ function Screen({ route }: { route: Route }) {
 
 export function App() {
   const route = useStore(routeStore);
-  const flow = useStore(app().flow.store);
+  const flow = useStore(app().flowStore);
   // Notices of the flow: inline on the create and paywall screens, a toast elsewhere.
   useEffect(() => {
     if (flow.notice && route.name !== 'create' && route.name !== 'paywall') showToast(noticeText(flow.notice));

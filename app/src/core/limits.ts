@@ -79,9 +79,15 @@ export function secondsToUtcMidnight(now: number): number {
   return Math.max(1, Math.ceil((midnight - now) / 1000));
 }
 
-/** "1 min", "12 min", "3 h": how long until [until], rounded up, never under a minute. */
+/** "20 s", "12 min", "3 h": how long until [until], rounded up. */
 export function formatWait(until: number, now: number): string {
   const left = Math.max(0, until - now) / 1000;
-  if (left <= 60 * 60) return `${Math.max(1, Math.ceil(left / 60))} min`;
+  if (left < 60) return `${Math.max(1, Math.ceil(left))} s`;
+  if (left <= 60 * 60) return `${Math.ceil(left / 60)} min`;
   return `${Math.ceil(left / 3600)} h`;
+}
+
+/** A limit notice still running at [now] (its Try again waits). */
+export function stillLimited(notice: unknown, now: number): boolean {
+  return typeof notice === 'object' && notice !== null && (notice as { kind?: unknown }).kind === 'rate_limited' && now < (notice as { until: number }).until;
 }

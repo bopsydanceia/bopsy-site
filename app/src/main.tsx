@@ -4,7 +4,7 @@ import { t } from './copy';
 import { navigate, routeStore, startRouter } from './core/router';
 import { createServices } from '#services';
 import { App, preloadScreens } from './ui/app';
-import { catalogReady, showToast, startApp } from './ui/app-state';
+import { catalogReady, loadFlow, showToast, startApp } from './ui/app-state';
 
 startRouter();
 const state = startApp(createServices());
@@ -41,6 +41,7 @@ if (routeStore.get().name === 'auth') {
       return;
     }
     await catalogReady();
-    if (state.flow.state.photo.kind === 'accepted') await state.flow.continueSignedIn(false);
+    if (state.flowStore.get().photo.kind !== 'accepted') return;
+    await (await loadFlow()).continueSignedIn(false);
   });
 }

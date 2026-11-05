@@ -2,7 +2,7 @@
 // and the preview link renewed before it expires.
 import { describe, expect, test, vi } from 'vitest';
 import { encodeUnderLimit, MAX_UPLOAD_BYTES, uploadType } from './image';
-import { formatWait, parsePostgrestRateLimit, parseRateLimit, secondsToUtcMidnight } from './limits';
+import { formatWait, parsePostgrestRateLimit, parseRateLimit, secondsToUtcMidnight, stillLimited } from './limits';
 import { MAX_ERROR_RELOADS, PreviewLinkKeeper, refreshDelay, type KeeperClock, type PreviewLinkState } from './preview-link';
 import type { PreviewLink } from './types';
 
@@ -40,11 +40,21 @@ describe('the common 429 of the server', () => {
   test('daily windows end at UTC midnight; waits read in minutes, then hours', () => {
     expect(secondsToUtcMidnight(NOW)).toBe(13 * 3600 + 40 * 60);
     expect(secondsToUtcMidnight(Date.parse('2026-11-05T23:59:59.500Z'))).toBe(1);
-    expect(formatWait(NOW + 5_000, NOW)).toBe('1 min');
+    expect(formatWait(NOW + 5_000, NOW)).toBe('5 s');
+    expect(formatWait(NOW + 59_500, NOW)).toBe('60 s');
+    expect(formatWait(NOW + 61_000, NOW)).toBe('2 min');
     expect(formatWait(NOW + 12 * 60_000, NOW)).toBe('12 min');
     expect(formatWait(NOW + 60 * 60_000, NOW)).toBe('60 min');
     expect(formatWait(NOW + 13.6 * 3_600_000, NOW)).toBe('14 h');
-    expect(formatWait(NOW - 1, NOW)).toBe('1 min');
+    expect(formatWait(NOW - 1, NOW)).toBe('1 s');
+  });
+
+  test('Try again waits for the end of a limit, not for other notices', () => {
+    const notice = { kind: 'rate_limited', action: 'photo_check', until: NOW + 1_000 };
+    expect(stillLimited(notice, NOW)).toBe(true);
+    expect(stillLimited(notice, NOW + 1_000)).toBe(false);
+    expect(stillLimited('upload_failed', NOW)).toBe(false);
+    expect(stillLimited(null, NOW)).toBe(false);
   });
 });
 

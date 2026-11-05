@@ -64,18 +64,8 @@ export interface FlowState {
   previewPause: PreviewPause | null;
 }
 
-export const initialFlow: FlowState = {
-  danceSlug: null,
-  photo: { kind: 'none' },
-  consent: false,
-  consentAt: null,
-  previewId: null,
-  previewUsed: false,
-  generation: null,
-  notice: null,
-  busy: null,
-  previewPause: null,
-};
+/** The flow before anything is picked (kept in draft.ts, which the first screen loads). */
+export { initialFlow } from './draft';
 
 function local(photo: PhotoState): LocalPhoto | null {
   return photo.kind === 'none' ? null : { file: photo.file, name: photo.name, url: photo.url };

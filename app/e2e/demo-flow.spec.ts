@@ -132,3 +132,52 @@ test('demo: a refused photo shows its reason, an EU buyer sees the waiver', asyn
   await shot(page, '13-paywall-eu');
   await context.close();
 });
+
+test('demo ?sim=: check limit then Try again, CAPTCHA refused then passed, report limit', async ({ page }) => {
+  await page.goto('./?sim=check-limit,captcha-preview,report-limit#/create/street-bounce');
+  await expect(page.getByRole('heading', { name: 'Create a dance' })).toBeVisible();
+  await page.getByRole('button', { name: 'Man' }).click();
+  await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
+  await expect(page.getByText(/^Too many photo checks\. Try again in \d+ s\./)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0); // not before the wait is over
+  await shot(page, '14-check-limit');
+  await page.getByRole('button', { name: 'Try again' }).click({ timeout: 15_000 });
+  await expect(page.getByText('Full body detected')).toBeVisible();
+  await page.getByRole('button', { name: 'Generate free preview' }).click();
+  await expect(page.getByText("We couldn't confirm you're not a bot. Try again.")).toBeVisible();
+  await page.getByRole('button', { name: 'Generate free preview' }).click();
+  await expect(page.getByText('PREVIEW · 2 S')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('a[download]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Report this video' }).click();
+  await page.getByRole('radio', { name: 'Something else' }).click();
+  await page.getByRole('button', { name: 'Send report' }).click();
+  await expect(page.getByText(/^You reached today's report limit\. Try again in \d+ (min|h)\.$/)).toBeVisible();
+  await shot(page, '15-report-limit');
+});
+
+test('demo ?sim=: free previews limited per IP, then off; the main button becomes Unlock', async ({ page }) => {
+  await page.goto('./?sim=preview-limit#/create/street-bounce');
+  await page.getByRole('button', { name: 'Man' }).click();
+  await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
+  await expect(page.getByText('Full body detected')).toBeVisible();
+  await page.getByRole('button', { name: 'Generate free preview' }).click();
+  await expect(page.getByRole('heading', { name: 'Where should we send your video?' })).toBeVisible();
+  await expect(page.getByText(/^Too many free previews from your connection today\. Try again in \d+ (min|h), or unlock the full video now\.$/)).toBeVisible();
+  await shot(page, '16-preview-limit');
+  await page.goBack();
+  await expect(page.getByRole('button', { name: 'Unlock full video' })).toBeEnabled();
+
+  // A new visitor (no draft, no demo server state), previews switched off.
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.goto('./?sim=preview-off#/create/hip-sway');
+  await page.reload();
+  await page.getByRole('button', { name: 'Dog' }).click();
+  await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
+  await expect(page.getByText('Full body detected')).toBeVisible();
+  await page.getByRole('button', { name: 'Generate free preview' }).click();
+  await expect(page.getByText('Free previews are paused right now. Unlock the full video to make yours.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Where should we send your video?' })).toBeVisible();
+});

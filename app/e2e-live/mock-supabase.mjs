@@ -34,6 +34,7 @@ const control = {
   generationLimit: false,
   brokenPreviewUrlOnce: false,
   previewUrlSeconds: 120,
+  checkLimitSeconds: 600,
 };
 /** Emails with bought coins (C4: they pay without a plan). */
 const RICH = new Set(['rich@example.com']);
@@ -191,7 +192,7 @@ createServer(async (req, res) => {
     if (known) return send(res, 200, { status: 'accepted', photo_id: known.id });
     if (control.checkLimitOnce) {
       control.checkLimitOnce = false;
-      return limited(res, 'photo_check', 600);
+      return limited(res, 'photo_check', control.checkLimitSeconds);
     }
     const id = randomUUID();
     photos.set(body.photo_path, { id, user_id: user.id });

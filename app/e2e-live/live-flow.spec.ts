@@ -76,9 +76,10 @@ test('live adapters: catalogue, consent, guest with CAPTCHA, check limit, previe
   expect(turnstile).toEqual([]);
 
   // Consent: guest session with a CAPTCHA token, upload, then check-photo's hourly limit (429).
-  await control({ checkLimitOnce: true });
+  await control({ checkLimitOnce: true, checkLimitSeconds: 3 });
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
-  await expect(page.getByText('Too many photo checks. Try again in 10 min.')).toBeVisible();
+  await expect(page.getByText(/^Too many photo checks\. Try again in [1-3] s\./)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0); // not before the wait is over
   expect(turnstile).toHaveLength(1);
   let log = await mockLog();
   const guest = log.find((entry) => entry.path === '/auth/v1/signup');
@@ -89,8 +90,8 @@ test('live adapters: catalogue, consent, guest with CAPTCHA, check limit, previe
   expect(uploads[0]!.path).toMatch(new RegExp(`^/storage/v1/object/photos/${uploads[0]!.user}/[0-9a-f-]{36}\\.jpg$`));
   const photoPath = uploads[0]!.path.replace('/storage/v1/object/photos/', '');
 
-  // Try again: the same photo_path, no new upload.
-  await page.getByRole('button', { name: 'Try again' }).click();
+  // Try again, once the wait is over: the same photo_path, no new upload.
+  await page.getByRole('button', { name: 'Try again' }).click({ timeout: 10_000 });
   await expect(page.getByText('Full body detected')).toBeVisible();
   log = await mockLog();
   expect(log.filter((entry) => entry.path.startsWith('/storage/v1/object/photos/'))).toHaveLength(1);

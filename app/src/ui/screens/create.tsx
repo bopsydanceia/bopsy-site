@@ -7,10 +7,11 @@ import { LINKS } from '../../config';
 import { rejectionText, t } from '../../copy';
 import { primaryAction } from '../../core/flow';
 import { canRetryUpload, canStart } from '../../core/flow-state';
+import { stillLimited } from '../../core/limits';
 import type { Dance } from '../../core/types';
 import { app, danceBySlug } from '../app-state';
 import { Checkbox, ErrorState, Header, Loading } from '../components';
-import { useLoad, useStore } from '../hooks';
+import { useLoad, useNow, useStore } from '../hooks';
 import { Icon } from '../icons';
 import { noticeText } from '../notices';
 
@@ -90,6 +91,7 @@ export function CreateScreen({ slug }: { slug: string }) {
   const catalog = useStore(app().catalog);
   const state = useStore(flow.store);
   const session = useStore(app().session);
+  const now = useNow(1000); // the wait of a limit counts down; its Try again shows once it is over
   useEffect(() => flow.selectDance(slug), [slug]);
   const [account] = useLoad(() => (session && !session.guest ? services.backend.account() : Promise.resolve(null)), [session?.userId, session?.guest]);
 
@@ -109,7 +111,7 @@ export function CreateScreen({ slug }: { slug: string }) {
 
   const photo = state.photo;
   const pick = (file: Blob, name: string) => flow.pickPhoto(file, name);
-  const action = primaryAction(state, session, account.status === 'ready' ? account.value : null, dance.cost, Date.now());
+  const action = primaryAction(state, session, account.status === 'ready' ? account.value : null, dance.cost, now);
   const label = action === 'generate' ? t.generate(dance.cost) : action === 'preview' ? t.generateFreePreview : t.unlock;
   const ready = canStart(state);
   const run = () => (action === 'generate' ? flow.generate() : action === 'preview' ? flow.startPreview() : flow.unlock());
@@ -169,8 +171,8 @@ export function CreateScreen({ slug }: { slug: string }) {
         )}
         {state.notice && (
           <div class={photo.kind === 'failed' && !canRetryUpload(photo.failure) ? 'message error' : 'message'} role="alert">
-            {noticeText(state.notice)}{' '}
-            {photo.kind === 'failed' && canRetryUpload(photo.failure) && state.consent && (
+            {noticeText(state.notice, now)}{' '}
+            {photo.kind === 'failed' && canRetryUpload(photo.failure) && state.consent && !stillLimited(state.notice, now) && (
               <button type="button" class="link" onClick={() => void flow.retryUpload()}>{t.tryAgain}</button>
             )}
           </div>
