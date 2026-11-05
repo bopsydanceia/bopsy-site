@@ -1,5 +1,5 @@
-// Fills the publisher's details into the built site (D140), from the
-// repository variables of GitHub (Settings > Secrets and variables >
+// Fills the publisher's details into the built site (D140), from legal.json
+// and the repository variables of GitHub (which win) (Settings > Secrets and variables >
 // Actions > Variables), so nothing personal has to be edited in the pages:
 //   LEGAL_NAME         first and last name as registered (micro-entreprise)
 //   LEGAL_ADDRESS      postal address (a domiciliation address works)
@@ -18,7 +18,14 @@ if (!dir) {
 }
 
 const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const env = (name) => (process.env[name] ?? '').trim();
+// Defaults from legal.json at the root of the site (public details), overridden by the variables.
+let defaults = {};
+try {
+  defaults = JSON.parse(readFileSync(new URL('../legal.json', import.meta.url), 'utf8'));
+} catch {
+  defaults = {};
+}
+const env = (name) => ((process.env[name] ?? '').trim() || String(defaults[name] ?? '').trim());
 const values = {
   'COMPANY LEGAL NAME': env('LEGAL_NAME'),
   ADDRESS: env('LEGAL_ADDRESS'),
