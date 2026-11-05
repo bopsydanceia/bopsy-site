@@ -6,6 +6,9 @@
 # Actions > Variables), in demo mode when none is. They are public keys
 # (anon or publishable key, RevenueCat Web Billing public key, Turnstile site
 # key); the build refuses a secret key, and fails when only some are set.
+# In live mode the legal pages must have no blank left: LEGAL_NAME,
+# LEGAL_ADDRESS, LEGAL_SIREN, SUPPORT_EMAIL and CONSUMER_MEDIATOR variables
+# (scripts/fill-legal.mjs).
 name: Pages
 
 on:
@@ -59,6 +62,15 @@ jobs:
           cp index.html style.css _site/
           cp -r assets privacy terms support delete-data legal _site/
           cp -r app/dist _site/app
+
+      - name: Publisher details in the legal pages (repository variables, D140)
+        env:
+          LEGAL_NAME: ${{ vars.LEGAL_NAME }}
+          LEGAL_ADDRESS: ${{ vars.LEGAL_ADDRESS }}
+          LEGAL_SIREN: ${{ vars.LEGAL_SIREN }}
+          SUPPORT_EMAIL: ${{ vars.SUPPORT_EMAIL }}
+          CONSUMER_MEDIATOR: ${{ vars.CONSUMER_MEDIATOR }}
+        run: node scripts/fill-legal.mjs _site ${{ vars.VITE_SUPABASE_URL != '' && '--strict' || '' }}
 
       - uses: actions/upload-pages-artifact@v4
         with:

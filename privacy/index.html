@@ -19,7 +19,7 @@
 <p>Bopsy turns one photo into a short dance video. This policy explains what we collect, why, who helps us, how long we keep it and what you can do about it. Bopsy is made by <span class="todo">[COMPANY LEGAL NAME]</span>, <span class="todo">[ADDRESS]</span> (“we”), the controller of your data. Contact: <a href="mailto:[SUPPORT EMAIL]"><span class="todo">[SUPPORT EMAIL]</span></a>.</p>
 
 <div class="card">
-  <strong>In short.</strong> In the app, you don't create an account with your name or email; on the web, you sign in with your email only when you unlock a video. We use the photo you pick only to check it and make your video. Photos are erased 30 days after upload. Your photos and videos are never used for ads, never sold, and our providers do not use them to train AI models. You can delete your photos and videos at any time in the app.
+  <strong>In short.</strong> In the app, you don't create an account with your name or email; on the web, you sign in with your email only when you unlock a video. We use the photo you pick only to check it and make your video. Photos are erased 30 days after upload. Your photos and videos are never used for ads, and never sold. You can delete your photos and videos at any time in the app.
 </div>
 
 <h2>1. What we collect</h2>
@@ -50,7 +50,7 @@
 </table></div>
 
 <h2>3. AI processing</h2>
-<p>We send your photo only after you tick the box confirming that the photo shows you or that you have the person's permission. First, <span class="todo">[MODERATION PROVIDER]</span> checks it and refuses photos of children, nudity and violence. Then the photo and the dance reference video go to our AI video provider, <span class="todo">[AI VIDEO PROVIDER]</span>, which uses the Kling model to make your video. Our providers process your photo only to give us this service and do not use it to train AI models. <span class="todo">[TO CONFIRM IN WRITING WITH EACH PROVIDER]</span></p>
+<p>We send your photo only after you tick the box confirming that the photo shows you or that you have the person's permission. First, OpenAI checks it and refuses photos of children, nudity and violence. Then the photo and the dance reference video go to our AI video provider, PiAPI, which uses the Kling model to make your video. Our providers process your photo only to give us this service. OpenAI does not use data sent through its API to train its models, and we send PiAPI only what it needs to make your video.</p>
 
 <h2>4. Who helps us</h2>
 <p>These providers process data for us, under contracts that limit them to our instructions:</p>
@@ -60,7 +60,7 @@
   <li><strong>Stripe</strong> (United States and Ireland): processing of web payments (card, Apple Pay, Google Pay) and fraud prevention. Your card details go to Stripe, not to us.</li>
   <li><strong>Apple</strong>: App Store payments, DeviceCheck, push notifications.</li>
   <li><strong>Google Firebase Cloud Messaging</strong>: delivery of notifications.</li>
-  <li><strong><span class="todo">[AI VIDEO PROVIDER]</span></strong> and <strong><span class="todo">[MODERATION PROVIDER]</span></strong>: see section 3.</li>
+  <li><strong>PiAPI</strong> and <strong>OpenAI</strong>: see section 3.</li>
   <li><strong>PostHog</strong> (usage, without IP) and <strong>Sentry</strong> (crash reports, without IP).</li>
   <li><strong>Meta</strong> and <strong>TikTok</strong>: ad measurement, only if you allow tracking.</li>
 </ul>
