@@ -1,8 +1,8 @@
 {
   "_comment": "Publisher details shown in the legal pages (public information). The repository variables of GitHub (LEGAL_NAME, LEGAL_ADDRESS, LEGAL_SIREN, SUPPORT_EMAIL, CONSUMER_MEDIATOR) override these values; see scripts/fill-legal.mjs.",
-  "LEGAL_NAME": "",
-  "LEGAL_ADDRESS": "",
+  "LEGAL_NAME": "Julien Marth",
+  "LEGAL_ADDRESS": "78 rue de Marseille, 69007 Lyon, France",
   "LEGAL_SIREN": "978 000 172",
-  "SUPPORT_EMAIL": "",
+  "SUPPORT_EMAIL": "bopsydanceia@gmail.com",
   "CONSUMER_MEDIATOR": ""
 }
