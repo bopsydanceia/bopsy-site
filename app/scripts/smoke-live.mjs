@@ -8,6 +8,7 @@ import { build } from 'vite';
 process.env.VITE_SUPABASE_URL = 'http://localhost:54321';
 process.env.VITE_SUPABASE_ANON_KEY = 'sb_publishable_local';
 process.env.VITE_REVENUECAT_WEB_KEY = 'rcb_local';
+process.env.VITE_TURNSTILE_SITE_KEY = '1x00000000000000000000AA'; // Cloudflare's always-pass test site key; api.js is served by the test
 await build({ logLevel: 'warn', build: { outDir: 'dist-live', emptyOutDir: true } });
 
 const node = process.execPath;
