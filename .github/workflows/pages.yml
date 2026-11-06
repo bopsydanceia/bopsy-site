@@ -63,7 +63,8 @@ jobs:
           # Domain checks served from the root of bopsyia.com (Apple Pay merchant domain, D142).
           # To check once the file exists: upload-pages-artifact may leave hidden folders out.
           if [ -d .well-known ]; then cp -r .well-known _site/; fi
-          cp -r assets privacy terms support delete-data legal _site/
+          # fr/: the French legal pages (fr/privacy, fr/terms, fr/support, fr/delete-data, fr/legal).
+          cp -r assets privacy terms support delete-data legal fr _site/
           cp -r app/dist _site/app
 
       - name: Publisher details in the legal pages (repository variables, D140)

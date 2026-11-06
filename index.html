@@ -13,103 +13,481 @@
 <meta property="og:image" content="assets/man-dance.jpg">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
-<link rel="preload" as="image" href="assets/man-dance.jpg">
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/bricolage-800-latin.woff2" crossorigin>
+<link rel="preload" as="image" href="assets/demo/man-poster.webp">
+<script>
+// Language before first paint: ?lang= wins (and is remembered), then the saved choice, then the browser.
+// English is in the HTML (crawlers, link previews); French hides the page until the swap at the end of body.
+(function () {
+  var lang = null, q = null;
+  try { q = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (q === 'fr' || q === 'en') { lang = q; try { localStorage.setItem('bopsy-lang', q); } catch (e) {} }
+  if (!lang) { try { var s = localStorage.getItem('bopsy-lang'); if (s === 'fr' || s === 'en') lang = s; } catch (e) {} }
+  if (!lang) { var l = (navigator.languages && navigator.languages[0]) || navigator.language || ''; lang = /^fr\b/i.test(l) ? 'fr' : 'en'; }
+  window.BOPSY_LANG = lang;
+  if (lang !== 'en') document.documentElement.className += ' i18n-wait';
+})();
+</script>
 <style>
-/* Landing: one phone-width column, the app's night palette, nothing to load but two photos. */
+@font-face { font-family: "Bricolage Grotesque"; font-weight: 800; font-style: normal; font-display: swap; src: url(assets/fonts/bricolage-800-latin.woff2) format("woff2"); }
 :root {
-  --bg: #120E18; --surface: #1C1626; --surface-2: #2A2234; --text: #FBF7F2; --muted: #B3A9BF;
-  --accent: #FF4D8D; --cta: #D42A66; --coin: #FFD23F;
+  --bg: #120E18; --surface: #1C1626; --surface-2: #2A2234; --line: #352C40; --text: #FBF7F2; --muted: #B3A9BF;
+  --accent: #FF4D8D; --cta: #D42A66; --cta-hi: #E8377A; --coin: #FFD23F; --ink: #1a1300;
   --display: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  --gutter: max(16px, env(safe-area-inset-left));
   color-scheme: dark;
 }
+.i18n-wait body { visibility: hidden; }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; background: var(--bg); }
-body {
-  margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--body);
-  padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
-}
-.wrap { max-width: 430px; margin: 0 auto; }
-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 0 8px; }
-.brand { font: 800 28px/1 var(--display); letter-spacing: -0.04em; color: var(--text); text-decoration: none; }
-.pill { font-size: 13px; font-weight: 700; color: var(--coin); background: var(--surface-2); border-radius: 999px; padding: 6px 12px; }
-.demo { position: relative; margin: 14px 0 0; border-radius: 26px; overflow: hidden; aspect-ratio: 4 / 5; background: var(--surface); }
-.demo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.demo .after { animation: swap 4.8s ease-in-out infinite; }
-.demo .before-inset {
-  position: absolute; left: 14px; bottom: 14px; width: 26%; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden;
-  border: 3px solid var(--text); box-shadow: 0 8px 24px rgba(0,0,0,.45);
-}
-.demo .before-inset img { position: static; width: 100%; height: 100%; object-fit: cover; }
-.demo .tag { position: absolute; right: 14px; top: 14px; font: 800 11px var(--body); letter-spacing: .08em; color: #1a1300; background: var(--coin); border-radius: 999px; padding: 5px 10px; }
-.demo::after { content: ""; position: absolute; inset: auto 0 0 0; height: 40%; background: linear-gradient(transparent, rgba(18,14,24,.55)); pointer-events: none; }
-@keyframes swap { 0%, 40% { opacity: 1; } 50%, 90% { opacity: 0; } 100% { opacity: 1; } }
-h1 { font: 800 clamp(36px, 10vw, 44px)/1.02 var(--display); letter-spacing: -0.04em; margin: 24px 0 10px; text-wrap: balance; }
-.lede { color: var(--muted); font-size: 17px; margin: 0 0 22px; }
+html { -webkit-text-size-adjust: 100%; background: var(--bg); scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--body); overflow-x: hidden; }
+img, video { display: block; max-width: 100%; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--coin); outline-offset: 3px; border-radius: 6px; }
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 50; background: var(--coin); color: var(--ink); padding: 10px 14px; border-radius: 10px; font-weight: 700; }
+.skip:focus { left: 8px; }
+.wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) 0 6px; }
+.brand { font: 800 30px/1 var(--display); letter-spacing: -0.05em; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
+.brand i { font-style: normal; color: var(--accent); }
+.top-right { display: flex; align-items: center; gap: 10px; }
+.lang { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; }
+.lang a { display: grid; place-items: center; min-width: 44px; min-height: 38px; border-radius: 999px; font: 700 13px/1 var(--body); letter-spacing: .06em; color: var(--muted); text-decoration: none; }
+.lang a[aria-current="true"] { background: var(--text); color: var(--bg); }
+.top .cta-sm { display: none; }
+
+/* Buttons */
 .cta {
-  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 58px; border-radius: 29px;
-  background: var(--cta); color: #fff; font-weight: 700; font-size: 18px; text-decoration: none; border: 0;
-  box-shadow: 0 10px 28px rgba(212,42,102,.35);
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 60px; padding: 0 28px; border-radius: 30px;
+  background: var(--cta); color: #fff; font: 700 18px/1.1 var(--body); text-decoration: none; text-align: center;
+  box-shadow: 0 12px 30px rgba(212,42,102,.4), inset 0 -3px 0 rgba(0,0,0,.18); transition: transform .15s ease, background .15s ease;
 }
-.cta[aria-disabled="true"] { background: var(--surface-2); color: var(--muted); box-shadow: none; }
-.cta:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.note { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
-.steps { list-style: none; padding: 0; margin: 34px 0 0; display: grid; gap: 10px; }
-.steps li { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; background: var(--surface); border-radius: 18px; padding: 14px 16px; }
-.steps b { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); color: var(--coin); font-size: 15px; }
-.steps span { font-weight: 600; }
-.steps small { display: block; color: var(--muted); font-weight: 400; font-size: 14px; }
-.trust { color: var(--muted); font-size: 14px; margin: 26px 0 0; }
-footer { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--surface-2); font-size: 13px; color: var(--muted); }
-footer a { color: var(--muted); }
+.cta:hover { background: var(--cta-hi); transform: translateY(-2px); }
+.cta:active { transform: translateY(1px); }
+.cta svg { width: 20px; height: 20px; flex: none; }
+.cta[aria-disabled="true"] { background: var(--surface-2); color: var(--muted); box-shadow: none; pointer-events: none; }
+.cta-sm { min-height: 44px; font-size: 15px; padding: 0 18px; box-shadow: none; }
+.cta-block { display: flex; width: 100%; }
+
+/* Hero */
+.hero { padding: 10px 0 8px; display: grid; gap: 22px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--body); color: var(--coin); background: rgba(255,210,63,.1); border: 1px solid rgba(255,210,63,.3); border-radius: 999px; padding: 8px 12px; margin: 6px 0 14px; }
+.eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(255,77,141,.25); animation: pulse 1.6s ease-in-out infinite; }
+h1 { font: 800 clamp(44px, 13.5vw, 88px)/.94 var(--display); letter-spacing: -0.05em; margin: 0 0 14px; text-wrap: balance; }
+h1 .hl { color: var(--accent); display: inline-block; position: relative; z-index: 0; }
+h1 .hl::after { content: ""; position: absolute; left: 2%; right: 2%; bottom: .02em; height: .14em; background: var(--coin); border-radius: 99px; transform: rotate(-1.5deg); z-index: -1; opacity: .9; }
+.lede { color: var(--muted); font-size: 18px; margin: 0 0 22px; max-width: 34em; }
+.lede b { color: var(--text); }
+.hero-cta { display: grid; gap: 10px; }
+.note { color: var(--muted); font-size: 14px; margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+.chips li { font-size: 14px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; }
+
+/* Phone demo */
+.stage { position: relative; display: grid; place-items: center; padding: 8px 0 14px; }
+.phone {
+  position: relative; width: min(100%, 360px); aspect-ratio: 4 / 5; border-radius: 30px; overflow: hidden; background: var(--surface);
+  box-shadow: 0 0 0 6px var(--surface-2), 0 30px 80px rgba(255,77,141,.25), 0 10px 30px rgba(0,0,0,.5);
+}
+.phone video, .card video { width: 100%; height: 100%; object-fit: cover; background: var(--surface); }
+.tag { position: absolute; font: 800 12px/1 var(--body); letter-spacing: .1em; border-radius: 999px; padding: 7px 11px; }
+.tag-after { right: 12px; top: 12px; background: var(--coin); color: var(--ink); }
+.before { position: absolute; left: 12px; bottom: 12px; width: 30%; aspect-ratio: 4 / 5; border-radius: 16px; overflow: hidden; border: 3px solid var(--text); box-shadow: 0 10px 24px rgba(0,0,0,.5); transform: rotate(-4deg); }
+.before img { width: 100%; height: 100%; object-fit: cover; }
+.before .tag { left: 6px; top: 6px; padding: 4px 7px; font-size: 10px; background: var(--bg); color: var(--text); }
+.arrow { position: absolute; left: calc(30% + 18px); bottom: 34px; width: 54px; height: 34px; color: var(--text); filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); }
+.sticker { position: absolute; font: 800 15px/1 var(--display); padding: 10px 14px; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.35); white-space: nowrap; }
+.s1 { background: var(--accent); color: #fff; top: 0; left: 2%; transform: rotate(-7deg); animation: bob 3s ease-in-out infinite; }
+.s2 { background: var(--text); color: var(--bg); bottom: 0; right: 2%; transform: rotate(5deg); animation: bob 3.4s ease-in-out .6s infinite; }
+
+/* Marquee */
+.band-clip { overflow: hidden; padding: 4px 0 18px; }
+.band { margin: 26px 0 0; background: var(--coin); color: var(--ink); transform: rotate(-2deg); overflow: hidden; padding: 12px 0; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.band-track { display: flex; width: max-content; animation: slide 22s linear infinite; }
+.band span { font: 800 22px/1 var(--display); letter-spacing: -0.02em; padding: 0 14px; white-space: nowrap; }
+.band span::after { content: "✦"; margin-left: 28px; color: var(--cta); }
+
+/* Sections */
+section { padding: 56px 0 0; }
+h2 { font: 800 clamp(34px, 9vw, 56px)/1 var(--display); letter-spacing: -0.045em; margin: 0 0 10px; text-wrap: balance; }
+.sub { color: var(--muted); font-size: 17px; margin: 0 0 22px; max-width: 36em; }
+
+/* Gallery */
+.gallery { display: grid; grid-auto-flow: column; grid-auto-columns: 62%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px var(--gutter) 14px; margin: 0 calc(-1 * var(--gutter)); list-style: none; scrollbar-width: none; }
+.gallery::-webkit-scrollbar { display: none; }
+.card { position: relative; scroll-snap-align: center; aspect-ratio: 4 / 5; border-radius: 22px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); }
+.card:nth-child(odd) { transform: rotate(-1.2deg); }
+.card:nth-child(even) { transform: rotate(1.2deg); }
+.card .label { position: absolute; left: 10px; bottom: 10px; font: 800 18px/1 var(--display); background: var(--bg); color: var(--text); border-radius: 12px; padding: 8px 11px; }
+.card .before { width: 34%; left: auto; right: 10px; bottom: auto; top: 10px; border-width: 2px; border-radius: 12px; transform: rotate(4deg); }
+.swipe { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+
+/* Steps */
+.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; counter-reset: s; }
+.steps li { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px 20px 20px 84px; min-height: 96px; }
+.steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 18px; top: 18px; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 16px; font: 800 26px/1 var(--display); background: var(--accent); color: #fff; transform: rotate(-6deg); }
+.steps li:nth-child(2)::before { background: var(--coin); color: var(--ink); transform: rotate(5deg); }
+.steps li:nth-child(3)::before { background: var(--text); color: var(--bg); }
+.steps h3 { font: 800 21px/1.1 var(--display); letter-spacing: -0.02em; margin: 0 0 4px; }
+.steps p { margin: 0; color: var(--muted); }
+
+/* Pricing */
+.price { position: relative; background: linear-gradient(140deg, #3a1530 0%, var(--surface) 55%); border: 1px solid #5a2547; border-radius: 28px; padding: 28px 22px; overflow: hidden; }
+.price::before { content: ""; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(var(--coin), transparent 70%); opacity: .22; }
+.price h2 { position: relative; }
+.ticks { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 10px; position: relative; }
+.ticks li { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; }
+.ticks li::before { content: ""; flex: none; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--coin) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%231a1300' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; }
+.offer { display: inline-block; position: relative; font: 800 14px/1 var(--body); letter-spacing: .06em; background: var(--accent); color: #fff; border-radius: 999px; padding: 8px 12px; margin: 0 0 14px; transform: rotate(-2deg); }
+
+/* FAQ */
+.faq { display: grid; gap: 10px; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 14px; min-height: 60px; padding: 14px 18px; font-weight: 700; font-size: 17px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--coin); font: 800 22px/1 var(--body); transition: transform .2s ease; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { margin: 0; padding: 0 18px 18px; color: var(--muted); }
+
+/* Final CTA */
+.final { text-align: center; padding: 72px 0 8px; }
+.final h2 { font-size: clamp(40px, 11vw, 76px); }
+.final .sub { margin-left: auto; margin-right: auto; }
+.final .cta { width: min(100%, 420px); }
+.trust { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; margin: 18px 0 0; }
+.trust svg { width: 18px; height: 18px; color: var(--coin); flex: none; }
+
+/* Footer */
+footer { margin: 56px 0 0; padding: 22px 0 calc(110px + env(safe-area-inset-bottom)); border-top: 1px solid var(--surface-2); color: var(--muted); font-size: 14px; }
+footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin: 0 0 8px; }
+footer nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); }
+footer nav a:hover { color: var(--text); }
 .todo { background: #4a3d00; color: #ffe27a; border-radius: 4px; padding: 0 4px; }
-@media (prefers-reduced-motion: reduce) { .demo .after { animation: none; } }
+
+/* Sticky CTA (phones) */
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(18,14,24,.92) 30%); transform: translateY(110%); transition: transform .25s ease; }
+.dock.on { transform: none; }
+.dock .cta { width: 100%; min-height: 56px; }
+
+@keyframes slide { to { transform: translateX(-50%); } }
+@keyframes bob { 50% { translate: 0 -6px; } }
+@keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(255,77,141,0); } }
+
+@media (min-width: 600px) {
+  .gallery { grid-auto-columns: 40%; }
+  .hero-cta { grid-template-columns: auto; justify-content: start; }
+}
+@media (min-width: 960px) {
+  .top { padding-top: 22px; }
+  .top .cta-sm { display: inline-flex; }
+  .hero { grid-template-columns: 1.08fr .92fr; align-items: center; gap: 48px; padding: 36px 0 16px; min-height: min(78vh, 700px); }
+  h1 { font-size: clamp(64px, 7.4vw, 96px); }
+  .lede { font-size: 20px; }
+  .phone { width: 380px; }
+  .s1 { left: 0; top: 8%; }
+  .s2 { right: 0; bottom: 6%; }
+  section { padding-top: 96px; }
+  .band span { font-size: 28px; }
+  .gallery { grid-auto-flow: row; grid-template-columns: repeat(4, 1fr); overflow: visible; margin: 0; padding: 4px 0 0; gap: 20px; }
+  .swipe { display: none; }
+  .steps { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .steps li { padding: 88px 24px 26px; min-height: 0; }
+  .steps li::before { left: 24px; top: 22px; }
+  .split { display: grid; grid-template-columns: 1fr 1.1fr; gap: 40px; align-items: start; }
+  .price { padding: 44px 40px; }
+  .final { padding-top: 120px; }
+  .dock { display: none; }
+  footer { padding-bottom: calc(32px + env(safe-area-inset-bottom)); display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+  footer nav { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .band-track { transform: none; }
+}
 </style>
 </head>
 <body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 <div class="wrap">
-  <header>
-    <a class="brand" href="./">bopsy</a>
-    <span class="pill">AI dance videos</span>
+  <header class="top">
+    <a class="brand" href="./" aria-label="Bopsy">bops<i>y</i></a>
+    <div class="top-right">
+      <nav class="lang" aria-label="Language" data-i18n-attr="aria-label:lang_label">
+        <a href="?lang=en" hreflang="en" lang="en" data-lang="en">EN</a>
+        <a href="?lang=fr" hreflang="fr" lang="fr" data-lang="fr">FR</a>
+      </nav>
+      <a class="cta cta-sm js-cta" href="#" aria-disabled="true" data-i18n="cta_short">Try it</a>
+    </div>
   </header>
 
-  <div class="demo" role="img" aria-label="A man sitting on a sofa, then the same man dancing">
-    <img src="assets/man-sit.jpg" alt="" width="480" height="600">
-    <img class="after" src="assets/man-dance.jpg" alt="" width="480" height="600">
-    <span class="tag">STREET BOUNCE</span>
-    <div class="before-inset"><img src="assets/man-sit.jpg" alt="" width="480" height="600"></div>
+  <main id="main">
+    <div class="hero">
+      <div>
+        <p class="eyebrow" data-i18n="eyebrow">AI dance videos · people, dogs &amp; cats</p>
+        <h1 data-i18n="h1">Make <span class="hl">anyone</span> dance</h1>
+        <p class="lede" data-i18n="lede"><b>One photo. One trending dance.</b> Your video is ready in about 2&nbsp;minutes. Your bestie, your dog, your cat, your grandma.</p>
+        <div class="hero-cta">
+          <a class="cta js-cta" id="cta" href="#" aria-disabled="true"><span data-i18n="cta">Make my photo dance</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <p class="note" data-i18n="note">Pick a dance, add your photo, unlock your video.</p>
+        </div>
+        <ul class="chips">
+          <li data-i18n="chip1">~2 min</li>
+          <li data-i18n="chip2">Weekly dances</li>
+          <li data-i18n="chip3">Photos erased after 30 days</li>
+        </ul>
+      </div>
+
+      <div class="stage">
+        <figure class="phone" style="margin:0">
+          <video class="js-video" autoplay muted loop playsinline preload="auto" poster="assets/demo/man-poster.webp" width="432" height="540"
+            aria-label="Demo: the man from the photo dancing" data-i18n-attr="aria-label:hero_video">
+            <source src="assets/demo/man.mp4" type="video/mp4">
+          </video>
+          <span class="tag tag-after" data-i18n="after">AFTER</span>
+          <div class="before">
+            <img src="assets/demo/man-before.webp" width="200" height="250" alt="Before: a man standing in his living room" data-i18n-attr="alt:hero_before">
+            <span class="tag" data-i18n="before">BEFORE</span>
+          </div>
+          <svg class="arrow" viewBox="0 0 54 34" aria-hidden="true"><path d="M3 28c12-2 26-8 40-21m0 0-11 1m11-1-2 11" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </figure>
+        <span class="sticker s1" aria-hidden="true" data-i18n="sticker1">1 photo ✦</span>
+        <span class="sticker s2" aria-hidden="true" data-i18n="sticker2">= 1 dance video</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="band-clip"><div class="band" aria-hidden="true">
+  <div class="band-track">
+    <span data-i18n="b1">Your bestie</span><span data-i18n="b2">Your dog</span><span data-i18n="b3">Your cat</span><span data-i18n="b4">Grandma</span><span data-i18n="b5">You</span>
+    <span data-i18n="b1">Your bestie</span><span data-i18n="b2">Your dog</span><span data-i18n="b3">Your cat</span><span data-i18n="b4">Grandma</span><span data-i18n="b5">You</span>
   </div>
+</div></div>
 
-  <h1>Make anyone dance</h1>
-  <p class="lede">One photo. Any trend. Your video is ready in about 2 minutes. Works with people, dogs and cats.</p>
+<div class="wrap">
+  <section aria-labelledby="g-title">
+    <h2 id="g-title" data-i18n="g_title">Everyone dances. Really.</h2>
+    <p class="sub" data-i18n="g_sub">Each of these started as one single photo.</p>
+    <ul class="gallery">
+      <li class="card">
+        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/dog.mp4" data-poster="assets/demo/dog-poster.webp" width="432" height="540" aria-label="A golden retriever dancing" data-i18n-attr="aria-label:v_dog"></video>
+        <div class="before"><img src="assets/demo/dog-before.webp" loading="lazy" width="200" height="250" alt="Before: the dog sitting on a sofa" data-i18n-attr="alt:v_dog_before"></div>
+        <span class="label" data-i18n="l_dog">The dog</span>
+      </li>
+      <li class="card">
+        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/mamie.mp4" data-poster="assets/demo/mamie-poster.webp" width="432" height="540" aria-label="A grandmother dancing in her living room" data-i18n-attr="aria-label:v_mamie"></video>
+        <div class="before"><img src="assets/demo/mamie-before.webp" loading="lazy" width="200" height="250" alt="Before: the grandmother sitting in her armchair" data-i18n-attr="alt:v_mamie_before"></div>
+        <span class="label" data-i18n="l_mamie">Grandma</span>
+      </li>
+      <li class="card">
+        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/cat.mp4" data-poster="assets/demo/cat-poster.webp" width="432" height="540" aria-label="A ginger cat dancing on its hind legs" data-i18n-attr="aria-label:v_cat"></video>
+        <span class="label" data-i18n="l_cat">The cat</span>
+      </li>
+      <li class="card">
+        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/woman.mp4" data-poster="assets/demo/woman-poster.webp" width="432" height="540" aria-label="A young woman dancing in the street at sunset" data-i18n-attr="aria-label:v_woman"></video>
+        <span class="label" data-i18n="l_woman">The bestie</span>
+      </li>
+    </ul>
+    <p class="swipe" aria-hidden="true" data-i18n="swipe">Swipe for more →</p>
+  </section>
 
-  <a class="cta" id="cta" href="#" aria-disabled="true">Coming soon</a>
-  <p class="note" id="cta-note">Add your photo, then unlock your video.</p>
+  <section aria-labelledby="h-title">
+    <h2 id="h-title" data-i18n="h_title">3 steps. That's it.</h2>
+    <p class="sub" data-i18n="h_sub">No editing skills, no app to learn.</p>
+    <ol class="steps">
+      <li><h3 data-i18n="s1_t">Pick a trending dance</h3><p data-i18n="s1_p">New ones drop every week.</p></li>
+      <li><h3 data-i18n="s2_t">Add one photo</h3><p data-i18n="s2_p">Whole body in the frame, one person, dog or cat.</p></li>
+      <li><h3 data-i18n="s3_t">Get your video</h3><p data-i18n="s3_p">Ready in about 2 minutes. Save it, post it, add the trending sound.</p></li>
+    </ol>
+  </section>
 
-  <ol class="steps">
-    <li><b>1</b><span>Pick a trending dance<small>New ones drop every week.</small></span></li>
-    <li><b>2</b><span>Add one photo<small>Whole body in the frame, one person or pet.</small></span></li>
-    <li><b>3</b><span>Get your video<small>Save it or post it, then add the trending sound.</small></span></li>
-  </ol>
+  <section aria-labelledby="p-title">
+    <div class="price">
+      <div class="split">
+        <div>
+          <p class="offer" data-i18n="offer">LAUNCH OFFER</p>
+          <h2 id="p-title" data-i18n="p_title">Simple plans</h2>
+          <p class="sub" data-i18n="p_sub">Weekly or yearly plan, with a launch offer for new subscribers. Your plan gives you coins every period, and each video uses coins.</p>
+        </div>
+        <div>
+          <ul class="ticks">
+            <li data-i18n="t1">You see the exact price before you pay</li>
+            <li data-i18n="t2">Cancel anytime, your plan runs to the end of the period</li>
+            <li data-i18n="t3">A video fails? Its coins come back automatically</li>
+          </ul>
+          <a class="cta js-cta" href="#" aria-disabled="true"><span data-i18n="cta_price">See the plans</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <p class="trust">Your photos are erased after 30 days and never used for ads.</p>
+  <section aria-labelledby="f-title">
+    <div class="split">
+      <div>
+        <h2 id="f-title" data-i18n="f_title">Questions?</h2>
+        <p class="sub" data-i18n="f_sub">The short answers.</p>
+      </div>
+      <div class="faq">
+        <details><summary data-i18n="q1">How long does it take?</summary><p data-i18n="a1">About 2 minutes once you unlock your video. You can leave the page and come back, your video waits for you.</p></details>
+        <details><summary data-i18n="q2">Which photos work best?</summary><p data-i18n="a2">A sharp photo of one adult, one dog or one cat, with the whole body in the frame. Use a photo of yourself, of an adult who agreed, or of your own pet. Photos of children, nudity or violence are always refused.</p></details>
+        <details><summary data-i18n="q3">What happens to my photo?</summary><p data-i18n="a3">It's used only to make your video. Photos are erased 30 days after upload, never used for ads and never sold. You can delete your photos and videos anytime.</p></details>
+        <details><summary data-i18n="q4">Can I cancel anytime?</summary><p data-i18n="a4">Yes. Cancel in the app under My account, Manage subscription. Your plan stays active until the end of the period you paid for.</p></details>
+        <details><summary data-i18n="q5">What if my video fails?</summary><p data-i18n="a5">Its coins come back to your balance automatically. No ticket to open.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="final" aria-labelledby="c-title">
+    <h2 id="c-title" data-i18n="c_title">Your camera roll is full of dancers.</h2>
+    <p class="sub" data-i18n="c_sub">They just don't know it yet.</p>
+    <a class="cta js-cta" href="#" aria-disabled="true"><span data-i18n="cta">Make my photo dance</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <p><span class="trust"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span data-i18n="trust">Your photos are erased after 30 days and never used for ads.</span></span></p>
+  </section>
 
   <footer>
+    <nav aria-label="Legal" data-i18n-attr="aria-label:legal_label">
+      <a class="js-legal" href="privacy/" data-path="privacy/" data-i18n="ft_privacy">Privacy</a>
+      <a class="js-legal" href="terms/" data-path="terms/" data-i18n="ft_terms">Terms</a>
+      <a class="js-legal" href="support/" data-path="support/" data-i18n="ft_support">Support</a>
+      <a class="js-legal" href="delete-data/" data-path="delete-data/" data-i18n="ft_delete">Delete data</a>
+      <a class="js-legal" href="legal/" data-path="legal/" data-i18n="ft_legal">Legal notice</a>
+    </nav>
     <span>© 2026 <span class="todo">[COMPANY LEGAL NAME]</span></span>
-    <a href="privacy/">Privacy</a><a href="terms/">Terms</a><a href="support/">Support</a><a href="delete-data/">Delete data</a><a href="legal/">Legal notice</a>
   </footer>
 </div>
+
+<div class="dock" id="dock">
+  <a class="cta js-cta" href="#" aria-disabled="true" tabindex="-1"><span data-i18n="cta">Make my photo dance</span></a>
+</div>
+
 <script>
-// The button opens the web app, carrying the ad parameters (utm_*, ttclid, fbclid) along.
 (function () {
-  var url = (document.querySelector('meta[name="bopsy-app-url"]') || {}).content || '';
-  var cta = document.getElementById('cta');
-  if (!url) return;
-  var target = new URL(url, location.href);
-  new URLSearchParams(location.search).forEach(function (v, k) { target.searchParams.set(k, v); });
-  cta.href = target.toString();
-  cta.textContent = 'Make my photo dance';
-  cta.removeAttribute('aria-disabled');
+  // French copy. English is the HTML itself (captured below so the switch can go back).
+  var FR = {
+    title: 'Bopsy · Fais danser n’importe qui',
+    desc: 'Transforme une photo en vidéo de danse tendance. Humains, chiens et chats. Prête en 2 minutes environ.',
+    skip: 'Aller au contenu', lang_label: 'Langue', legal_label: 'Informations légales',
+    cta_short: 'Essayer', cta: 'Fais danser ta photo', cta_soon: 'Bientôt dispo', cta_price: 'Voir les formules',
+    eyebrow: 'Vidéos de danse IA · humains, chiens &amp; chats',
+    h1: 'Fais danser <span class="hl">n’importe qui</span>',
+    lede: '<b>Une photo. Une danse tendance.</b> Ta vidéo est prête en 2&nbsp;minutes environ. Ta pote, ton chien, ton chat, ta mamie.',
+    note: 'Choisis une danse, ajoute ta photo, débloque ta vidéo.',
+    chip1: '~2 min', chip2: 'Nouvelles danses chaque semaine', chip3: 'Photos effacées sous 30 jours',
+    hero_video: 'Démo : l’homme de la photo en train de danser', hero_before: 'Avant : un homme debout dans son salon',
+    after: 'APRÈS', before: 'AVANT', sticker1: '1 photo ✦', sticker2: '= 1 vidéo qui danse',
+    b1: 'Ta pote', b2: 'Ton chien', b3: 'Ton chat', b4: 'Mamie', b5: 'Toi',
+    g_title: 'Tout le monde danse. Vraiment.', g_sub: 'Chacune de ces vidéos est partie d’une seule photo.',
+    v_dog: 'Un golden retriever qui danse', v_dog_before: 'Avant : le chien assis sur un canapé',
+    v_mamie: 'Une mamie qui danse dans son salon', v_mamie_before: 'Avant : la mamie assise dans son fauteuil',
+    v_cat: 'Un chat roux qui danse sur ses pattes arrière', v_woman: 'Une jeune femme qui danse dans la rue au coucher du soleil',
+    l_dog: 'Le chien', l_mamie: 'Mamie', l_cat: 'Le chat', l_woman: 'La bestie', swipe: 'Swipe pour voir la suite →',
+    h_title: '3 étapes. C’est tout.', h_sub: 'Aucun montage, rien à apprendre.',
+    s1_t: 'Choisis une danse tendance', s1_p: 'Des nouvelles chaque semaine.',
+    s2_t: 'Ajoute une photo', s2_p: 'Corps entier dans le cadre : une personne, un chien ou un chat.',
+    s3_t: 'Récupère ta vidéo', s3_p: 'Prête en 2 minutes environ. Enregistre-la, poste-la, ajoute le son du moment.',
+    offer: 'OFFRE DE LANCEMENT', p_title: 'Des formules simples',
+    p_sub: 'Formule à la semaine ou à l’année, avec une offre de lancement pour les nouveaux abonnés. Ta formule te donne des pièces à chaque période, et chaque vidéo coûte des pièces.',
+    t1: 'Tu vois le prix exact avant de payer', t2: 'Tu résilies quand tu veux, ta formule court jusqu’à la fin de la période', t3: 'Une vidéo rate ? Tes pièces reviennent toutes seules',
+    f_title: 'Des questions ?', f_sub: 'Les réponses courtes.',
+    q1: 'Ça prend combien de temps ?', a1: 'Environ 2 minutes une fois ta vidéo débloquée. Tu peux quitter la page et revenir, ta vidéo t’attend.',
+    q2: 'Quelles photos marchent le mieux ?', a2: 'Une photo nette d’un seul adulte, d’un chien ou d’un chat, avec le corps entier dans le cadre. Utilise une photo de toi, d’un adulte qui est d’accord, ou de ton propre animal. Les photos d’enfants, de nudité ou de violence sont toujours refusées.',
+    q3: 'Qu’est-ce que vous faites de ma photo ?', a3: 'Elle sert uniquement à faire ta vidéo. Les photos sont effacées 30 jours après l’envoi, jamais utilisées pour de la pub et jamais vendues. Tu peux supprimer tes photos et vidéos quand tu veux.',
+    q4: 'Je peux résilier quand je veux ?', a4: 'Oui. Résilie dans l’appli, rubrique Mon compte, Gérer l’abonnement. Ta formule reste active jusqu’à la fin de la période payée.',
+    q5: 'Et si ma vidéo rate ?', a5: 'Ses pièces reviennent automatiquement sur ton solde. Pas de ticket à ouvrir.',
+    c_title: 'Ta galerie est pleine de danseurs.', c_sub: 'Ils ne le savent pas encore.',
+    trust: 'Tes photos sont effacées au bout de 30 jours et jamais utilisées pour de la pub.',
+    ft_privacy: 'Confidentialité', ft_terms: 'Conditions d’utilisation', ft_support: 'Aide', ft_delete: 'Supprimer mes données', ft_legal: 'Mentions légales'
+  };
+  var EN = { title: document.title, desc: '', cta_soon: 'Coming soon' };
+  var metaDesc = document.querySelector('meta[name="description"]');
+  EN.desc = metaDesc.content;
+  var texts = document.querySelectorAll('[data-i18n]');
+  var attrs = document.querySelectorAll('[data-i18n-attr]');
+  texts.forEach(function (el) { var k = el.getAttribute('data-i18n'); if (!(k in EN)) EN[k] = el.innerHTML; });
+  attrs.forEach(function (el) {
+    el.getAttribute('data-i18n-attr').split(';').forEach(function (p) {
+      var kv = p.split(':'); if (!(kv[1] in EN)) EN[kv[1]] = el.getAttribute(kv[0]);
+    });
+  });
+
+  var appUrl = (document.querySelector('meta[name="bopsy-app-url"]') || {}).content || '';
+  var ctas = document.querySelectorAll('.js-cta');
+
+  function apply(lang) {
+    var d = lang === 'fr' ? FR : EN;
+    var t = function (k) { return d[k] != null ? d[k] : EN[k]; };
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    metaDesc.content = t('desc');
+    texts.forEach(function (el) {
+      var k = el.getAttribute('data-i18n');
+      if (k === 'cta' && !appUrl) k = 'cta_soon';
+      el.innerHTML = t(k);
+    });
+    attrs.forEach(function (el) {
+      el.getAttribute('data-i18n-attr').split(';').forEach(function (p) { var kv = p.split(':'); el.setAttribute(kv[0], t(kv[1])); });
+    });
+    document.querySelectorAll('.lang a').forEach(function (a) { a.setAttribute('aria-current', a.getAttribute('data-lang') === lang ? 'true' : 'false'); });
+    document.querySelectorAll('.js-legal').forEach(function (a) { a.href = (lang === 'fr' ? 'fr/' : '') + a.getAttribute('data-path'); });
+    // The button opens the web app, carrying the ad parameters (utm_*, ttclid, fbclid) and the language along.
+    if (appUrl) {
+      var target = new URL(appUrl, location.href);
+      new URLSearchParams(location.search).forEach(function (v, k) { target.searchParams.set(k, v); });
+      target.searchParams.set('lang', lang);
+      ctas.forEach(function (a) { a.href = target.toString(); a.removeAttribute('aria-disabled'); });
+    }
+  }
+
+  try { apply(window.BOPSY_LANG || 'en'); } finally { document.documentElement.classList.remove('i18n-wait'); }
+
+  document.querySelectorAll('.lang a').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var lang = a.getAttribute('data-lang');
+      try { localStorage.setItem('bopsy-lang', lang); } catch (err) {}
+      try { var u = new URL(location.href); u.searchParams.set('lang', lang); history.replaceState(null, '', u); } catch (err) {}
+      apply(lang);
+    });
+  });
+
+  // Videos: muted loops that play only on screen; below-the-fold ones load when they come near.
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var videos = document.querySelectorAll('.js-video');
+  function load(v) {
+    if (v.dataset.poster) { v.poster = v.dataset.poster; v.removeAttribute('data-poster'); }
+    if (v.dataset.src) { v.src = v.dataset.src; v.removeAttribute('data-src'); }
+  }
+  if (reduce) {
+    videos.forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
+  }
+  if ('IntersectionObserver' in window) {
+    var near = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { load(e.target); near.unobserve(e.target); } });
+    }, { rootMargin: '300px 300px' });
+    var seen = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var v = e.target;
+        if (e.isIntersecting) { load(v); if (!reduce) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } }
+        else v.pause();
+      });
+    }, { threshold: 0.25 });
+    videos.forEach(function (v) { near.observe(v); seen.observe(v); });
+
+    // Sticky button on phones once the hero button has scrolled away (hidden again near the final one).
+    var dock = document.getElementById('dock');
+    var dockLink = dock.querySelector('a');
+    var heroOut = false, finalIn = false;
+    var sync = function () { var on = heroOut && !finalIn; dock.classList.toggle('on', on); dockLink.tabIndex = on ? 0 : -1; };
+    new IntersectionObserver(function (es) { heroOut = !es[0].isIntersecting && es[0].boundingClientRect.top < 0; sync(); }).observe(document.getElementById('cta'));
+    new IntersectionObserver(function (es) { finalIn = es[0].isIntersecting; sync(); }).observe(document.querySelector('.final .cta'));
+  } else {
+    videos.forEach(load);
+  }
 })();
 </script>
 </body>
