@@ -7,3 +7,4 @@ lighthouse/
 .env
 .env.*
 dist-live/
+.claude-shots/

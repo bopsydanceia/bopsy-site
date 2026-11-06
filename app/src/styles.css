@@ -1,6 +1,7 @@
 /* Bopsy web app: the app's night palette (design/SPEC.md tokens), mobile
-   first; above 500 px a centered 430 px column (D109); safe areas for the
-   TikTok and Instagram in-app browsers. */
+   first; from 500 px a centered 430 px phone column (D109), from 900 px a
+   wide computer layout (end of file); safe areas for the TikTok and
+   Instagram in-app browsers. */
 :root {
   --bg: #120e18;
   --surface: #1c1626;
@@ -242,3 +243,89 @@ textarea { width: 100%; min-height: 84px; padding: 12px; border-radius: 14px; bo
 .teaser .lock .badge-lock svg { width: 18px; height: 18px; }
 .teaser .dance-pill { position: absolute; right: 12px; bottom: 12px; color: var(--accent); background: rgba(28, 22, 38, 0.82); }
 @media (prefers-reduced-motion: reduce) { .prep .orb { animation: none; } }
+
+/* Helpers: [hidden] beats the img/video display rules; the layout panes
+   vanish on phones (one column) and become columns on a computer. */
+[hidden] { display: none !important; }
+.desk-only, .desk-nav { display: none !important; }
+.pane { display: contents; }
+
+/* Language switch (account screen, computer header) */
+.lang { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface-2); }
+.lang button { min-width: 40px; min-height: 32px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-weight: 800; font-size: 13px; letter-spacing: .04em; cursor: pointer; }
+.lang button[aria-pressed='true'] { background: var(--text); color: var(--bg); }
+.lang-row { cursor: default; margin-bottom: 4px; }
+.lang-row .lang button { min-width: 52px; min-height: 40px; }
+
+/* Catalogue: the hook and lively cards */
+.hook { display: inline-block; margin: 4px 0 0; padding: 5px 12px; border-radius: 999px; background: rgba(255, 77, 141, 0.14); color: var(--accent); font-weight: 800; font-size: 13px; animation: hook-in 480ms cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes hook-in { from { opacity: 0; transform: translateY(6px) scale(.94); } }
+.card { background: radial-gradient(120% 70% at 25% 0%, rgba(255, 77, 141, 0.26), rgba(255, 77, 141, 0) 65%), var(--surface); transition: transform 180ms ease, box-shadow 180ms ease; }
+.card.skeleton { background: linear-gradient(100deg, var(--surface) 40%, var(--surface-2) 50%, var(--surface) 60%) 0 0 / 200% 100%; }
+.card img { transition: transform 400ms ease; }
+.card:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .card:hover { transform: translateY(-4px) rotate(-0.6deg); box-shadow: 0 16px 34px rgba(212, 42, 102, 0.28); }
+  .card:hover img { transform: scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) { .card:hover, .card:active, .card:hover img { transform: none; } }
+
+/* Computer: a wide layout, the header nav, two columns where a phone
+   stacks; the sticky CTA bar stays a phone pattern. */
+@media (min-width: 900px) {
+  :root { --gutter: 32px; --gutter-r: 32px; }
+  body { background: radial-gradient(1100px 560px at 50% -12%, rgba(212, 42, 102, 0.18), rgba(212, 42, 102, 0) 70%), var(--bg); }
+  .shell { max-width: 1120px; margin: 0 auto; }
+  .top { min-height: 80px; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; }
+  .top h1 { text-align: left; font-size: 22px; }
+  .desk-only { display: inline-flex !important; }
+  .mobile-only { display: none !important; }
+  .desk-nav { display: flex !important; align-items: center; gap: 2px; margin-right: 8px; }
+  .desk-nav a { padding: 10px 14px; border-radius: 999px; color: var(--text-soft); font-weight: 700; font-size: 15px; text-decoration: none; white-space: nowrap; }
+  .desk-nav a:hover { background: var(--surface); }
+  .desk-nav a[aria-current='page'] { background: var(--surface-2); color: var(--text); }
+  .desk-nav .lang { margin-left: 8px; }
+  .title { font-size: 46px; }
+  .cta-bar { position: static; margin: 22px 0 0; padding: 0; background: none; }
+  .toast { bottom: 32px; }
+  .backdrop { align-items: center; }
+  .sheet, .captcha-sheet { border-radius: 28px; }
+  .captcha { align-items: center; }
+
+  .catalog-head { padding: 12px 0 4px; }
+  .catalog-head .lede { font-size: 18px; }
+  .section { margin-top: 34px; }
+  .section h2 { font-size: 28px; margin-bottom: 16px; }
+  .catalog .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .card { border-radius: 22px; }
+  .card-name { left: 16px; right: 16px; bottom: 14px; font-size: 19px; }
+
+  .split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: 48px; align-items: start; padding-top: 8px; padding-bottom: 48px; }
+  .pane { display: block; }
+  .pane-side { display: flex; flex-direction: column; }
+  .create { grid-template-rows: auto 1fr; }
+  .create > .dance-row { grid-column: 2; grid-row: 1; }
+  .create > .pane-media { grid-column: 1; grid-row: 1 / 3; }
+  .create > .pane-side { grid-column: 2; grid-row: 2; }
+  .create .photo { margin-top: 0; height: min(70vh, 660px); }
+  .create .drop { margin-top: 0; }
+  .split .player { height: min(72vh, 680px); }
+  .gen .scan { width: 100%; max-width: 460px; margin: 0 auto; }
+  .gen .progress-head, .split .result-head { margin-top: 0; }
+  .split .pitch { margin-top: 0; font-size: 22px; }
+
+  .prep { padding-top: 10vh; }
+  .prep .orb { width: 184px; height: 184px; }
+  .locked, .narrow { width: 100%; max-width: 560px; margin: 0 auto; }
+  .locked .teaser { height: min(60vh, 600px); }
+  .locked .title { margin-top: 22px; }
+
+  .paywall { flex: 0 0 auto; width: 480px; max-width: 100%; margin: 8px auto 48px; padding: 26px 28px 18px; border-radius: 32px; border: 1px solid var(--border); background: rgba(28, 22, 38, 0.94); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); }
+  .paywall .title { font-size: 38px; }
+  .paywall .plan { background: var(--bg); }
+
+  .wide .tiles { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+}
+@media (min-width: 1100px) {
+  .catalog .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

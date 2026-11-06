@@ -3,6 +3,7 @@
 // chunk; the other screens load in idle time just after it.
 import { useEffect } from 'preact/hooks';
 import { routeStore, type Route } from '../core/router';
+import { t } from '../copy';
 import { app, loadFlow, showToast } from './app-state';
 import { Loading, Toast } from './components';
 import { useStore } from './hooks';
@@ -52,7 +53,7 @@ function Screen({ route }: { route: Route }) {
     case 'account':
       return <AccountScreen />;
     case 'auth':
-      return <Loading label="Signing you in…" />;
+      return <Loading label={t.signingIn} />;
   }
 }
 

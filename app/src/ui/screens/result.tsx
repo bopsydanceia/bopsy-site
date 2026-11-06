@@ -58,7 +58,7 @@ export function ResultScreen({ id }: { id: string }) {
     return (
       <>
         <Header back="/videos" />
-        <main><FailedView video={video} /></main>
+        <main class="narrow"><FailedView video={video} /></main>
       </>
     );
   }
@@ -75,10 +75,11 @@ export function ResultScreen({ id }: { id: string }) {
   return (
     <>
       <Header back="/videos" right={<button type="button" class="icon-btn" aria-label={t.reportTitle} onClick={() => setReporting(true)}><Icon name="flag" /></button>} />
-      <main>
+      <main class="split">
+        <div class="pane pane-media">
         <div class="player">
           {url ? (
-            <video src={url} autoplay muted loop playsInline aria-label={`Your finished dance video: ${dance?.name ?? ''}`} onClick={(event) => {
+            <video src={url} autoplay muted loop playsInline aria-label={t.resultVideoLabel(dance?.name ?? '')} onClick={(event) => {
               const player = event.currentTarget as HTMLVideoElement;
               if (player.paused) void player.play();
               else player.pause();
@@ -86,8 +87,10 @@ export function ResultScreen({ id }: { id: string }) {
           ) : (
             <div class="skeleton" style={{ height: '100%' }} />
           )}
-          {photoUrl && <div class="inset"><img src={photoUrl} alt="Original photo" /></div>}
+          {photoUrl && <div class="inset"><img src={photoUrl} alt={t.originalPhoto} /></div>}
         </div>
+        </div>
+        <div class="pane pane-side">
         <div class="result-head">
           <div>
             <h2>{t.resultTitle}</h2>
@@ -108,6 +111,7 @@ export function ResultScreen({ id }: { id: string }) {
         <div class="hint-row">
           <span>{t.hint}</span>
           <button type="button" class="link" onClick={() => app().flow.makeAnother()}>{t.makeAnother}</button>
+        </div>
         </div>
       </main>
       {reporting && <ReportSheet videoId={video.id} onClose={() => setReporting(false)} />}

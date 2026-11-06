@@ -21,7 +21,7 @@ export function FailedView({ video }: { video: Video }) {
   const cause = video.errorCode === 'body_not_detected' ? t.failedNoBody : video.errorCode === 'timeout' ? t.failedTimeout : t.failedServer;
   return (
     <>
-      {photoUrl && <div class="scan"><img src={photoUrl} alt="The photo that could not be animated" style={{ opacity: 0.45 }} /></div>}
+      {photoUrl && <div class="scan"><img src={photoUrl} alt={t.failedPhotoLabel} style={{ opacity: 0.45 }} /></div>}
       <h1 class="title center">{t.failedTitle}</h1>
       <p class="lede center">{cause}</p>
       {video.coinsRefunded > 0 && <p class="message center ok-text" role="status">{t.failedRefund(video.coinsRefunded, wallet?.total ?? null)}</p>}
@@ -67,13 +67,13 @@ export function GeneratingScreen({ id }: { id: string }) {
     return (
       <>
         <Header close={() => navigate('/videos', { replace: true })} />
-        <main><FailedView video={video} /></main>
+        <main class="narrow"><FailedView video={video} /></main>
       </>
     );
   }
 
   const dance = danceById(video.danceId);
-  const name = dance?.name ?? 'Dance';
+  const name = dance?.name ?? t.danceFallback;
   const percent = displayProgress(video, now, minutes);
   const queued = video.status === 'queued';
   const longer = isTakingLonger(video, now, minutes);
@@ -82,17 +82,20 @@ export function GeneratingScreen({ id }: { id: string }) {
   return (
     <>
       <Header title={t.generatingTitle} close={() => navigate('/videos', { replace: true })} right={<span />} />
-      <main>
+      <main class="split gen">
+        <div class="pane pane-media">
         <div class="scan">
-          {(photoUrl ?? dance?.posterUrl) && <img src={photoUrl ?? dance!.posterUrl!} alt="Your photo being animated" />}
+          {(photoUrl ?? dance?.posterUrl) && <img src={photoUrl ?? dance!.posterUrl!} alt={t.generatingPhotoLabel} />}
           <div class="veil" style={{ height: `${percent}%` }} />
           <div class="line" style={{ top: `calc(${percent}% - 2px)` }} />
         </div>
+        </div>
+        <div class="pane pane-side">
         <div class="progress-head" aria-hidden="true">
           <span>{queued ? t.queued : `${percent}%`}</span>
           <span>{queued ? '' : longer ? '' : t.minLeft(minutesLeft(video, now, minutes))}</span>
         </div>
-        <div class="bar" role="progressbar" aria-label="Video progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
+        <div class="bar" role="progressbar" aria-label={t.progressLabel} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
           <div style={{ width: `${percent}%` }} />
         </div>
         {longer && <p class="message" role="status">{t.takingLonger}</p>}
@@ -104,7 +107,7 @@ export function GeneratingScreen({ id }: { id: string }) {
         <p class="muted" style={{ marginTop: '18px' }}>{t.generatingCaption(video.cost)}</p>
         {trending.length > 0 && (
           <section class="section">
-            <h2 style={{ fontSize: '18px' }}>Trending while you wait</h2>
+            <h2 style={{ fontSize: '18px' }}>{t.trendingWhileWaiting}</h2>
             <div class="tiles" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               {trending.map((item) => (
                 <a key={item.id} class="tile" href={`#/create/${item.slug}`}>
@@ -115,6 +118,7 @@ export function GeneratingScreen({ id }: { id: string }) {
             </div>
           </section>
         )}
+        </div>
       </main>
     </>
   );

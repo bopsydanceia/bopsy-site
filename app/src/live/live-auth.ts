@@ -7,8 +7,12 @@
 // D132: the CAPTCHA of Supabase Auth guards the guest sign-in and the code
 // sent by signInWithOtp, a fresh Turnstile token each call (updateUser and
 // verifyOtp need none); a refused token gets one more try with a new one.
+// The language of the app goes in the user metadata (`locale`, 'fr' | 'en')
+// before the code email is sent, so the Supabase email templates can pick
+// it (.Data.locale), and again after the code (accounts made before).
 import type { AuthError, Session as SupabaseSession, SupabaseClient } from '@supabase/supabase-js';
 import { KEYS } from '../config';
+import { LOCALE, type Locale } from '../locale';
 import { CaptchaFailed, type AuthPort, type SendCodeResult, type VerifyCodeResult } from '../core/ports';
 import { normalizeEmail } from '../core/otp';
 import type { Session } from '../core/types';
@@ -60,6 +64,8 @@ export interface LiveAuthDeps {
   /** supabase-js, loaded on demand (tests pass a fake client). */
   load?: () => Promise<SupabaseClient>;
   captcha?: CaptchaPort;
+  /** The app language stored in the user metadata (default: the active one). */
+  locale?: Locale;
 }
 
 export class LiveAuth implements AuthPort {
@@ -71,10 +77,12 @@ export class LiveAuth implements AuthPort {
   private pending: 'email' | 'email_change' = 'email';
   private readonly load: () => Promise<SupabaseClient>;
   private readonly captcha: CaptchaPort;
+  private readonly locale: Locale;
 
   constructor(deps: LiveAuthDeps = {}) {
     this.load = deps.load ?? supabase;
     this.captcha = deps.captcha ?? lazyCaptcha;
+    this.locale = deps.locale ?? LOCALE;
     const stored = storedUser();
     this.session = stored ? { userId: stored.id, email: stored.email, guest: stored.anonymous } : null;
   }
@@ -145,7 +153,7 @@ export class LiveAuth implements AuthPort {
     try {
       const client = await this.client();
       if (this.session?.guest) {
-        const { error } = await client.auth.updateUser({ email }, { emailRedirectTo: appUrl() });
+        const { error } = await client.auth.updateUser({ email, data: { locale: this.locale } }, { emailRedirectTo: appUrl() });
         if (!error) {
           this.pending = 'email_change';
           return { ok: true };
@@ -153,7 +161,7 @@ export class LiveAuth implements AuthPort {
         if (!isEmailTaken(error)) return sendError(error);
       }
       const { error } = await this.withCaptcha('code', (captchaToken) =>
-        client.auth.signInWithOtp({ email, options: withToken({ shouldCreateUser: true, emailRedirectTo: appUrl() }, captchaToken) }),
+        client.auth.signInWithOtp({ email, options: withToken({ shouldCreateUser: true, emailRedirectTo: appUrl(), data: { locale: this.locale } }, captchaToken) }),
       );
       if (error) return sendError(error);
       this.pending = 'email';
@@ -175,6 +183,10 @@ export class LiveAuth implements AuthPort {
       }
       const session = toSession(data.session)!;
       this.update(session);
+      // Best effort, never in the way of the purchase.
+      void Promise.resolve()
+        .then(() => client.auth.updateUser({ data: { locale: this.locale } }))
+        .catch(() => undefined);
       return { ok: true, session, userChanged: before !== null && before !== session.userId };
     } catch {
       return { ok: false, error: 'network' };

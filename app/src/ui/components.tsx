@@ -1,8 +1,9 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
-import { DEMO } from '../config';
-import { coins, t } from '../copy';
-import { goBack } from '../core/router';
+import { DEMO, LINKS } from '../config';
+import { coins, formatNumber, t } from '../copy';
+import { goBack, routeStore } from '../core/router';
+import { LOCALE, LOCALES, switchLocale } from '../locale';
 import { app } from './app-state';
 import { useStore } from './hooks';
 import { Icon } from './icons';
@@ -15,13 +16,47 @@ export function CoinPill() {
   return (
     <a class="pill" href="#/account" aria-label={wallet ? `${coins(wallet.total)}, ${t.account}` : t.account}>
       <Icon name="coin" />
-      <span aria-hidden="true">{wallet ? wallet.total.toLocaleString('en-US') : '…'}</span>
+      <span aria-hidden="true">{wallet ? formatNumber(wallet.total) : '…'}</span>
     </a>
   );
 }
 
 export function DemoBadge() {
-  return DEMO ? <span class="demo-badge" title="Demo mode: nothing is charged, nothing is sent">{t.demoBadge}</span> : null;
+  return DEMO ? <span class="demo-badge" title={t.demoBadgeTitle}>{t.demoBadge}</span> : null;
+}
+
+/** FR / EN: stores the choice and reloads the page in that language. */
+export function LangSwitch() {
+  return (
+    <div class="lang" role="group" aria-label={t.language}>
+      {LOCALES.map((locale) => (
+        <button
+          key={locale}
+          type="button"
+          lang={locale}
+          aria-pressed={locale === LOCALE}
+          aria-label={t.languageNames[locale]}
+          onClick={() => locale !== LOCALE && switchLocale(locale)}
+        >
+          {locale.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** The header links of a computer screen (hidden on phones, where the screens link to each other). */
+function DeskNav() {
+  const route = useStore(routeStore);
+  const current = (name: string) => (route.name === name ? 'page' : undefined);
+  return (
+    <nav class="desk-nav">
+      <a href="#/" aria-current={current('dances')}>{t.navDances}</a>
+      <a href="#/videos" aria-current={current('videos')}>{t.myVideos}</a>
+      <a href="#/account" aria-current={current('account')}>{t.account}</a>
+      <LangSwitch />
+    </nav>
+  );
 }
 
 interface HeaderProps {
@@ -38,11 +73,10 @@ export function Header({ title, back, close, brand, right }: HeaderProps) {
   return (
     <header class="top">
       <div class="top-left">
-        {brand && (
-          <a class="brand" href="../" aria-label="Bopsy home">
-            {t.wordmark}
-          </a>
-        )}
+        {/* On a computer the wordmark is always there (desktop-only when the screen has a back or close button). */}
+        <a class={brand ? 'brand' : 'brand desk-only'} href={LINKS.home} aria-label={t.homeLabel}>
+          {t.wordmark}
+        </a>
         {back !== undefined && (
           <button type="button" class="icon-btn" onClick={() => goBack(back)} aria-label={t.back}>
             <Icon name="back" />
@@ -56,12 +90,13 @@ export function Header({ title, back, close, brand, right }: HeaderProps) {
       </div>
       {title ? <h1>{title}</h1> : <span />}
       <div class="top-right">
+        <DeskNav />
         <DemoBadge />
         {right ?? (
           <>
             <CoinPill />
             {(!session || session.guest) && brand && (
-              <a class="icon-btn" href="#/account" aria-label={t.account}>
+              <a class="icon-btn mobile-only" href="#/account" aria-label={t.account}>
                 <Icon name="user" />
               </a>
             )}
