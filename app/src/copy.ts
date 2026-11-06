@@ -362,7 +362,7 @@ const fr: Copy = {
   danceMeta: (seconds: number, cost: number) => `${seconds} s · ${frCoins(cost)}`,
   change: 'Changer',
   addPhotoTitle: 'Ajoute une photo',
-  addPhotoBody: 'Le corps entier dans le cadre. Une personne ou un animal.',
+  addPhotoBody: 'En pied, bien nette : une personne, un chien ou un chat.',
   camera: 'Appareil photo',
   gallery: 'Galerie',
   tipsTitle: 'Conseils photo',
@@ -403,7 +403,7 @@ const fr: Copy = {
   captchaFailed: 'On n’a pas pu vérifier que tu n’es pas un robot. Réessaie.',
   captchaTitle: 'Petite vérif : tu n’es pas un robot ?',
   pickAnother: 'Choisis une autre trend',
-  makeVideo: 'Créer ma vidéo',
+  makeVideo: 'Lancer ma vidéo',
 
   preparingTitle: 'On prépare ta trend',
   preparingSteps: ['On vérifie ta photo', 'On cale les mouvements', 'On prépare ta vidéo'],
@@ -412,7 +412,7 @@ const fr: Copy = {
     `Débloque-la et on crée ta vidéo ${dance} de ${seconds} secondes en HD, sans filigrane. Prête environ ${minutes} min après.`,
   teaserPlayLabel: 'Vidéo verrouillée. Débloque-la pour la créer.',
   unlockMine: 'Débloquer ma vidéo',
-  teaserNote: 'Créée rien que pour toi dès que tu la débloques.',
+  teaserNote: 'Créée rien que pour toi, dès que tu la débloques.',
   newsletter: 'Préviens-moi par e-mail quand l’app iPhone sort et quand de nouvelles trends arrivent.',
 
   previewTitle: 'Ton aperçu gratuit',
@@ -448,7 +448,7 @@ const fr: Copy = {
   invalidCode: 'Ce code ne marche pas. Vérifie-le ou demande-en un nouveau.',
   rateLimited: 'Trop d’essais. Attends une minute et réessaie.',
 
-  paywallTitle: 'Débloque Bopsy',
+  paywallTitle: 'Débloque ta vidéo',
   coinLine: (weekly: number, cost: number) => `${frCoins(weekly)} chaque semaine · 1 vidéo = ${frCoins(cost)}`,
   launchOffer: 'OFFRE DE LANCEMENT',
   saveBadge: (percent: number) => `−${percent} %`,
@@ -512,7 +512,7 @@ const fr: Copy = {
     `Tu peux fermer cette page, ta vidéo t’attend dans Mes vidéos. Si ça échoue, ${cost <= 1 ? `ta pièce t’est rendue` : `tes ${cost} pièces te sont rendues`} automatiquement.`,
   takingLonger: 'Ça prend un peu plus de temps que d’habitude. Tu peux fermer cette page, elle sera dans Mes vidéos.',
 
-  resultTitle: 'Ça danse !',
+  resultTitle: 'Ta trend est prête !',
   resultVideoLabel: (dance: string) => `Ta vidéo terminée : ${dance}`,
   resultMeta: (dance: string, seconds: number) => `${dance} · ${seconds} s · HD`,
   coinsLeft: (balance: number) => `${formatNumber(balance)} ${balance <= 1 ? 'restante' : 'restantes'}`,

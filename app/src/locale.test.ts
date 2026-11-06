@@ -45,7 +45,7 @@ describe('dictionaries', () => {
 
   test('French texts are French', () => {
     expect(fr.pickDance).toBe('Choisis ta trend');
-    expect(fr.makeVideo).toBe('Créer ma vidéo');
+    expect(fr.makeVideo).toBe('Lancer ma vidéo');
     expect(fr.coins(1)).toBe('1 pièce');
     expect(fr.coins(60)).toBe('60 pièces');
     expect(fr.planTitle({ price: '7,99 €', period: 'week', intro: null })).toBe('7,99 € / semaine');
