@@ -1,9 +1,9 @@
 # Publishes bopsy-site to GitHub Pages (D116 adjusted): the landing, the
 # legal pages and the web app built from app/ under /app/.
-# The app is built in live mode when the four repository variables
-# VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_REVENUECAT_WEB_KEY and
-# VITE_TURNSTILE_SITE_KEY are set (Settings > Secrets and variables >
-# Actions > Variables), in demo mode when none is. They are public keys
+# The app is built in live mode when the three repository variables
+# VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_REVENUECAT_WEB_KEY are set
+# (Settings > Secrets and variables > Actions > Variables), in demo mode when
+# none is; VITE_TURNSTILE_SITE_KEY is optional (D143). They are public keys
 # (anon or publishable key, RevenueCat Web Billing public key, Turnstile site
 # key); the build refuses a secret key, and fails when only some are set.
 # In live mode the legal pages must have no blank left: LEGAL_NAME,
@@ -45,7 +45,7 @@ jobs:
         working-directory: app
         run: npm test
 
-      - name: Build the web app (live with the four variables, demo with none)
+      - name: Build the web app (live with the three variables, demo with none)
         working-directory: app
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}

@@ -153,6 +153,22 @@ describe('Supabase Auth with the CAPTCHA (D132)', () => {
   });
 });
 
+describe('without Turnstile (D143)', () => {
+  test('empty tokens: guest sign-in and Send code go without captchaToken, and a refusal is not retried', async () => {
+    const fake = fakeClient({});
+    const { auth } = live(fake, tokens(['', '']));
+    await auth.ensureSession();
+    expect(fake.calls.auth[0]).toEqual({ method: 'signInAnonymously', args: { options: {} } });
+    await auth.signOut();
+    const refused = fakeClient({ auth: { signInWithOtp: () => captchaError } });
+    const noCaptcha = live(refused, tokens(['', '']));
+    expect(await noCaptcha.auth.sendCode('a@b.co')).toEqual({ ok: false, error: 'captcha' });
+    const otp = refused.calls.auth.filter((call) => call.method === 'signInWithOtp');
+    expect(otp).toHaveLength(1);
+    expect((otp[0]!.args as { options: Record<string, unknown> }).options).not.toHaveProperty('captchaToken');
+  });
+});
+
 describe('check-photo and the photos bucket (D131)', () => {
   const accepted = () => ok({ status: 'accepted', photo_id: 'photo-1' });
 

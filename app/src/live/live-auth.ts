@@ -17,8 +17,15 @@ import type { CaptchaAction, CaptchaPort } from './turnstile';
 
 /** Turnstile, loaded the first time a token is needed (not with this module). */
 export const lazyCaptcha: CaptchaPort = {
-  token: (action: CaptchaAction) => import('./turnstile').then((module) => module.siteTurnstile(KEYS.turnstileSiteKey).token(action)),
+  // D143: no site key, no CAPTCHA: an empty token, and the Auth calls go without one.
+  token: (action: CaptchaAction) =>
+    KEYS.turnstileSiteKey ? import('./turnstile').then((module) => module.siteTurnstile(KEYS.turnstileSiteKey).token(action)) : Promise.resolve(''),
 };
+
+/** The Auth options of a CAPTCHA token; none when the token is empty (D143). */
+function withToken<T extends object>(options: T, captchaToken: string): T & { captchaToken?: string } {
+  return captchaToken ? { ...options, captchaToken } : options;
+}
 
 function toSession(session: SupabaseSession | null): Session | null {
   const user = session?.user;
@@ -109,8 +116,10 @@ export class LiveAuth implements AuthPort {
    * Turnstile gives no token.
    */
   private async withCaptcha<T extends { error: AuthError | null }>(action: CaptchaAction, call: (captchaToken: string) => Promise<T>): Promise<T> {
-    let result = await call(await this.captcha.token(action));
-    if (isCaptchaError(result.error)) result = await call(await this.captcha.token(action));
+    const first = await this.captcha.token(action);
+    let result = await call(first);
+    // Without a CAPTCHA (empty token, D143) a refusal is final: a second call would change nothing.
+    if (first && isCaptchaError(result.error)) result = await call(await this.captcha.token(action));
     return result;
   }
 
@@ -118,7 +127,7 @@ export class LiveAuth implements AuthPort {
     const client = await this.client();
     if (this.session) return this.session;
     // One guest sign-in at a time: each one spends a CAPTCHA token.
-    this.signingIn ??= this.withCaptcha('guest', (captchaToken) => client.auth.signInAnonymously({ options: { captchaToken } }))
+    this.signingIn ??= this.withCaptcha('guest', (captchaToken) => client.auth.signInAnonymously({ options: withToken({}, captchaToken) }))
       .then(({ data, error }) => {
         if (isCaptchaError(error)) throw new CaptchaFailed('captcha_failed');
         if (error || !data.session) throw error ?? new Error('no session');
@@ -144,7 +153,7 @@ export class LiveAuth implements AuthPort {
         if (!isEmailTaken(error)) return sendError(error);
       }
       const { error } = await this.withCaptcha('code', (captchaToken) =>
-        client.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: appUrl(), captchaToken } }),
+        client.auth.signInWithOtp({ email, options: withToken({ shouldCreateUser: true, emailRedirectTo: appUrl() }, captchaToken) }),
       );
       if (error) return sendError(error);
       this.pending = 'email';

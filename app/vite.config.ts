@@ -44,12 +44,12 @@ export default defineConfig(({ mode }) => {
     revenueCatWebKey: env.VITE_REVENUECAT_WEB_KEY ?? '',
     turnstileSiteKey: env.VITE_TURNSTILE_SITE_KEY ?? '',
   };
-  // D114: a secret key never reaches a bundle. A live build needs all four
-  // variables (D132: no Turnstile site key, no guest session and no preview).
+  // D114: a secret key never reaches a bundle. A live build needs the three
+  // live variables; the Turnstile site key is optional (D143).
   const problems = keyProblems(keys);
   const missing = missingLiveKeys(keys);
   if (missing.length > 0 && mode !== 'test') {
-    problems.push(`live mode needs ${missing.join(', ')} (set all four live variables, or none for the demo)`);
+    problems.push(`live mode needs ${missing.join(', ')} (set the three live variables, or none for the demo)`);
   }
   if (problems.length > 0) throw new Error(`Refusing to build: ${problems.join('; ')}`);
   const live = mode !== 'test' && isLiveConfig(keys);

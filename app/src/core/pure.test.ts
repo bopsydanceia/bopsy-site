@@ -170,16 +170,17 @@ describe('public keys only (D114)', () => {
   const base = { supabaseUrl: 'https://abcd.supabase.co', supabaseAnonKey: 'sb_publishable_x', revenueCatWebKey: 'rcb_x', turnstileSiteKey: '0x4AAAAAAADnPIDROrmt1Wwj' };
   const jwt = (role: string) => `h.${btoa(JSON.stringify({ role })).replace(/=+$/, '')}.s`;
 
-  test('live only with the four values; a live build missing one fails, none is the demo', () => {
+  test('live with the three values, Turnstile optional (D143); a live build missing one fails, none is the demo', () => {
     expect(isLiveConfig(base)).toBe(true);
     expect(isLiveConfig({ ...base, revenueCatWebKey: '' })).toBe(false);
-    expect(isLiveConfig({ ...base, turnstileSiteKey: '' })).toBe(false);
+    expect(isLiveConfig({ ...base, turnstileSiteKey: '' })).toBe(true);
     const none = { supabaseUrl: '', supabaseAnonKey: '', revenueCatWebKey: '', turnstileSiteKey: '' };
     expect(isLiveConfig(none)).toBe(false);
     expect(missingLiveKeys(none)).toEqual([]);
     expect(missingLiveKeys(base)).toEqual([]);
-    expect(missingLiveKeys({ ...base, turnstileSiteKey: ' ' })).toEqual(['VITE_TURNSTILE_SITE_KEY']);
-    expect(missingLiveKeys({ ...none, supabaseUrl: base.supabaseUrl })).toEqual(['VITE_SUPABASE_ANON_KEY', 'VITE_REVENUECAT_WEB_KEY', 'VITE_TURNSTILE_SITE_KEY']);
+    expect(missingLiveKeys({ ...base, turnstileSiteKey: ' ' })).toEqual([]);
+    expect(missingLiveKeys({ ...base, supabaseAnonKey: ' ' })).toEqual(['VITE_SUPABASE_ANON_KEY']);
+    expect(missingLiveKeys({ ...none, supabaseUrl: base.supabaseUrl })).toEqual(['VITE_SUPABASE_ANON_KEY', 'VITE_REVENUECAT_WEB_KEY']);
   });
 
   test('secret keys are refused', () => {

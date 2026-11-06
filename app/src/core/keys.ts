@@ -9,12 +9,15 @@ export interface PublicKeys {
   turnstileSiteKey: string;
 }
 
-/** The build variables of live mode, all four needed. */
+/**
+ * The build variables of live mode, all three needed. The Turnstile site key
+ * is optional (D143): without it, no CAPTCHA (Supabase Auth CAPTCHA left off,
+ * the free preview stays off) and the IP limits of Auth and the server remain.
+ */
 export const LIVE_VARIABLES: ReadonlyArray<[keyof PublicKeys, string]> = [
   ['supabaseUrl', 'VITE_SUPABASE_URL'],
   ['supabaseAnonKey', 'VITE_SUPABASE_ANON_KEY'],
   ['revenueCatWebKey', 'VITE_REVENUECAT_WEB_KEY'],
-  ['turnstileSiteKey', 'VITE_TURNSTILE_SITE_KEY'],
 ];
 
 function jwtRole(token: string): string | null {
@@ -52,7 +55,7 @@ export function keyProblems(keys: PublicKeys): string[] {
 /**
  * The live variables left empty while others are set: a live build with a
  * missing key fails instead of silently becoming the demo. Empty list: all
- * four set (live) or none (demo).
+ * three set (live) or none (demo).
  */
 export function missingLiveKeys(keys: PublicKeys): string[] {
   const empty = LIVE_VARIABLES.filter(([field]) => !keys[field].trim()).map(([, name]) => name);
