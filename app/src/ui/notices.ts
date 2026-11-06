@@ -26,7 +26,7 @@ export function noticeText(notice: Notice, now: number = Date.now()): string {
     case 'dance_unavailable':
       return t.danceUnavailable;
     case 'too_many':
-      return `${t.rendering(3)}. Wait for one to finish.`; // createReadyTooManyInProgress + NEW
+      return t.tooMany(3);
     case 'plan_activating':
       return t.planActivating;
     case 'error':

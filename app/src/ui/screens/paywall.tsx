@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { LINKS } from '../../config';
 import { t } from '../../copy';
+import { LOCALE } from '../../locale';
 import { deviceTimeZone } from '../../core/eu';
 import * as pw from '../../core/paywall';
 import type { OfferItem, PackItem, PlanItem } from '../../core/ports';
@@ -56,9 +57,9 @@ function CoinsInfo({ cost, plans, packs, onClose }: { cost: number; plans: PlanI
   return (
     <Sheet title={t.whatAreCoins} onClose={onClose}>
       <p><b>{t.coinsInfoCard(cost)}</b><br /><span class="muted">{t.coinsInfoBody}</span></p>
-      {weekly && <p><b>Weekly plan:</b> {t.coinsInfoWeekly(weekly.coins, Math.floor(weekly.coins / cost))}</p>}
-      {yearly && <p><b>Yearly plan:</b> {t.coinsInfoYearly(yearly.coins, Math.floor(yearly.coins / cost))}</p>}
-      {pack && <p><b>Coin packs</b> {t.coinsInfoPacks(pack.coins, pack.price.formatted)}</p>}
+      {weekly && <p><b>{t.coinsInfoWeeklyLabel}</b> {t.coinsInfoWeekly(weekly.coins, Math.floor(weekly.coins / cost))}</p>}
+      {yearly && <p><b>{t.coinsInfoYearlyLabel}</b> {t.coinsInfoYearly(yearly.coins, Math.floor(yearly.coins / cost))}</p>}
+      {pack && <p><b>{t.coinsInfoPacksLabel}</b> {t.coinsInfoPacks(pack.coins, pack.price.formatted)}</p>}
       <p class="muted small">{t.videoFailedQ} {t.coinsComeBack}</p>
       <button type="button" class="btn btn-secondary btn-block" onClick={onClose}>{t.gotIt}</button>
     </Sheet>
@@ -135,7 +136,7 @@ export function PaywallScreen() {
     }
     setState((s) => ({ ...s, status: 'buying', error: null }));
     const billing = await services.billing();
-    const outcome = await billing.purchase(session, item, { email: session.email, target: host.current, metadata: pw.purchaseMetadata(current, new Date()) });
+    const outcome = await billing.purchase(session, item, { email: session.email, target: host.current, metadata: { ...pw.purchaseMetadata(current, new Date()), locale: LOCALE } });
     host.current?.replaceChildren();
     if (outcome.kind === 'purchased') await afterPurchase();
     else setState((s) => ({ ...s, status: 'ready', error: outcome.kind === 'failed' ? 'purchase_failed' : null }));
@@ -162,7 +163,7 @@ export function PaywallScreen() {
   return (
     <>
       <Header close={() => goBack('/')} right={<button type="button" class="link" onClick={() => setInfo(true)}>{t.whatAreCoins}</button>} />
-      <main>
+      <main class="paywall">
         {state.mode === 'packs' ? (
           <>
             <h1 class="title center">{t.needCoins(cost)}</h1>

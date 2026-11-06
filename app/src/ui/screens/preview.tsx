@@ -46,7 +46,8 @@ export function PreviewScreen({ id }: { id: string }) {
   return (
     <>
       <Header title={t.previewTitle} back={back} right={<span />} />
-      <main>
+      <main class="split">
+        <div class="pane pane-media">
         {video.status === 'ready' && (link.status === 'error' || link.status === 'missing') ? (
           <ErrorState text={link.status === 'missing' ? t.unavailable : t.videoLoadError} retry={link.status === 'error' ? player.retry : undefined} />
         ) : video.status === 'ready' && link.status === 'ready' ? (
@@ -64,14 +65,14 @@ export function PreviewScreen({ id }: { id: string }) {
               onLoadedMetadata={(event) => setSeconds(Math.max(1, Math.round((event.target as HTMLVideoElement).duration)))}
               onPlaying={player.onPlaying}
               onError={player.onError}
-              aria-label="Preview of your photo dancing"
+              aria-label={t.previewVideoLabel}
             />
             <div class="watermark" aria-hidden="true">bopsy</div>
             <span class="tag">{t.previewTag(seconds)}</span>
             <button type="button" class="icon-btn filled flag" aria-label={t.reportTitle} onClick={() => setReporting(true)}>
               <Icon name="flag" />
             </button>
-            {photoUrl && <div class="inset"><img src={photoUrl} alt="Original photo" /></div>}
+            {photoUrl && <div class="inset"><img src={photoUrl} alt={t.originalPhoto} /></div>}
             {dance && <span class="pill dance-pill">{dance.name}</span>}
           </div>
         ) : video.status === 'failed' ? (
@@ -86,6 +87,8 @@ export function PreviewScreen({ id }: { id: string }) {
             )}
           </div>
         )}
+        </div>
+        <div class="pane pane-side">
         {video.status !== 'failed' && (
           <p class="pitch"><b>{t.previewPitchLead}</b> {t.previewPitchBody(dance?.durationSeconds ?? 8)}</p>
         )}
@@ -95,6 +98,7 @@ export function PreviewScreen({ id }: { id: string }) {
             {!generate && <span class="sub">{t.unlockSubtitle(minutes)}</span>}
           </button>
           <p class="refund-note">{t.videoFailedQ} <b>{t.coinsComeBack}</b></p>
+        </div>
         </div>
       </main>
       {reporting && <ReportSheet videoId={video.id} onClose={() => setReporting(false)} />}

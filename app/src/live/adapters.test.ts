@@ -138,11 +138,26 @@ describe('Supabase Auth with the CAPTCHA (D132)', () => {
     const { auth, captcha } = live(fake);
     expect(await auth.sendCode('Dancer@Example.com')).toEqual({ ok: true });
     expect(fake.calls.auth.map((call) => call.method)).toEqual(['updateUser', 'signInWithOtp']);
-    expect(fake.calls.auth[0]!.args).toEqual({ email: 'dancer@example.com' });
-    expect(fake.calls.auth[1]!.args).toMatchObject({ email: 'dancer@example.com', options: { shouldCreateUser: true, captchaToken: 'tok-1' } });
+    // The app language goes with the email (templates branch on .Data.locale).
+    expect(fake.calls.auth[0]!.args).toEqual({ email: 'dancer@example.com', data: { locale: 'en' } });
+    expect(fake.calls.auth[1]!.args).toMatchObject({ email: 'dancer@example.com', options: { shouldCreateUser: true, captchaToken: 'tok-1', data: { locale: 'en' } } });
     expect(captcha.asked).toEqual(['code']);
     expect(await auth.verifyCode('dancer@example.com', '123456')).toMatchObject({ ok: true });
-    expect(fake.calls.auth.at(-1)).toEqual({ method: 'verifyOtp', args: { email: 'dancer@example.com', token: '123456', type: 'email' } });
+    expect(fake.calls.auth.find((call) => call.method === 'verifyOtp')).toEqual({ method: 'verifyOtp', args: { email: 'dancer@example.com', token: '123456', type: 'email' } });
+    await vi.waitFor(() => expect(fake.calls.auth.at(-1)).toEqual({ method: 'updateUser', args: { data: { locale: 'en' } } }));
+  });
+
+  test('French: the locale fr is stored before the code email (guest and signInWithOtp) and after the code', async () => {
+    const fake = fakeClient({
+      session: { id: GUEST, anonymous: true },
+      auth: { updateUser: (args) => ((args as { email?: string }).email ? { data: {}, error: Object.assign(new Error('already registered'), { code: 'email_exists', status: 422 }) } : { data: {}, error: null }) },
+    });
+    const auth = new LiveAuth({ load: async () => fake.client, captcha: tokens(), locale: 'fr' });
+    expect(await auth.sendCode('a@b.co')).toEqual({ ok: true });
+    expect(fake.calls.auth[0]).toMatchObject({ method: 'updateUser', args: { email: 'a@b.co', data: { locale: 'fr' } } });
+    expect(fake.calls.auth[1]).toMatchObject({ method: 'signInWithOtp', args: { options: { data: { locale: 'fr' } } } });
+    expect(await auth.verifyCode('a@b.co', '123456')).toMatchObject({ ok: true });
+    await vi.waitFor(() => expect(fake.calls.auth.at(-1)).toEqual({ method: 'updateUser', args: { data: { locale: 'fr' } } }));
   });
 
   test('Send code: a refused token is retried once, then the captcha error; no token at all too', async () => {

@@ -63,7 +63,7 @@ function showCheckout(target: HTMLElement, item: OfferItem): Promise<boolean> {
     panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('aria-label', t.checkoutDemoTitle);
     const title = el('h2', 'checkout-title', t.checkoutDemoTitle);
-    const line = el('p', 'checkout-line', item.kind === 'plan' ? `${item.period === 'week' ? 'Weekly' : 'Yearly'} plan · ${due.formatted} today` : `${item.coins.toLocaleString('en-US')} coins · ${due.formatted}`);
+    const line = el('p', 'checkout-line', item.kind === 'plan' ? t.checkoutPlanLine(item.period, due.formatted) : t.checkoutPackLine(item.coins, due.formatted));
     const body = el('p', 'checkout-body', t.checkoutDemoBody);
     const pay = el('button', 'btn btn-cta', t.pay(due.formatted));
     pay.type = 'button';

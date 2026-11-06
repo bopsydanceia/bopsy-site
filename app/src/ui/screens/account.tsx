@@ -3,10 +3,10 @@
 // photos and videos, sign out, legal links.
 import { useState } from 'preact/hooks';
 import { LINKS } from '../../config';
-import { t } from '../../copy';
+import { formatNumber, t } from '../../copy';
 import { navigate } from '../../core/router';
 import { app, showToast } from '../app-state';
-import { Header, Sheet } from '../components';
+import { Header, LangSwitch, Sheet } from '../components';
 import { useLoad, useStore } from '../hooks';
 import { Icon } from '../icons';
 
@@ -25,7 +25,7 @@ export function AccountScreen() {
     try {
       const offer = await (await services.billing()).offer(session);
       if (offer.managementUrl) location.href = offer.managementUrl;
-      else showToast(`Write to us from the Support page to change your plan.`); // NEW
+      else showToast(t.manageFallback);
     } catch {
       showToast(t.error);
     }
@@ -54,7 +54,11 @@ export function AccountScreen() {
   return (
     <>
       <Header title={t.account} back="/" right={<span />} />
-      <main>
+      <main class="narrow">
+        <div class="row lang-row">
+          <span>{t.language}</span>
+          <LangSwitch />
+        </div>
         {!signedIn ? (
           <div class="empty">
             <p class="muted">{t.signInBody}</p>
@@ -69,7 +73,7 @@ export function AccountScreen() {
                   {t.coinsTitle}
                   <small>{detail}</small>
                 </span>
-                <span class="pill"><Icon name="coin" />{wallet ? wallet.total.toLocaleString('en-US') : '…'}</span>
+                <span class="pill"><Icon name="coin" />{wallet ? formatNumber(wallet.total) : '…'}</span>
               </div>
               {sub?.active ? (
                 <>

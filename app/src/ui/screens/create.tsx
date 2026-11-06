@@ -66,7 +66,7 @@ function Samples({ onFile }: { onFile: (file: Blob, name: string) => void }) {
           type="button"
           onClick={async () => onFile(await (await fetch(sample.url)).blob(), sample.file)}
         >
-          {sample.label}
+          {t.sampleNames[sample.label] ?? sample.label}
         </button>
       ))}
     </div>
@@ -96,7 +96,7 @@ export function CreateScreen({ slug }: { slug: string }) {
   useEffect(() => flow.selectDance(slug), [slug]);
   const [account] = useLoad(() => (session && !session.guest ? services.backend.account() : Promise.resolve(null)), [session?.userId, session?.guest]);
 
-  if (catalog.status === 'loading') return <Loading label="Loading" />;
+  if (catalog.status === 'loading') return <Loading label={t.loading} />;
   const dance = danceBySlug(slug);
   if (!dance) {
     return (
@@ -120,8 +120,10 @@ export function CreateScreen({ slug }: { slug: string }) {
   return (
     <>
       <Header title={t.createTitle} back="/" />
-      <main>
+      {/* Phone: one column (the panes are display: contents). Computer: photo left, the rest right. */}
+      <main class="split create">
         <DanceRow dance={dance} />
+        <div class="pane pane-media">
         {photo.kind === 'none' ? (
           <section class="drop" aria-labelledby="add-photo">
             <h2 id="add-photo">{t.addPhotoTitle}</h2>
@@ -134,7 +136,6 @@ export function CreateScreen({ slug }: { slug: string }) {
             <Samples onFile={pick} />
           </section>
         ) : (
-          <>
             <div class="photo">
               {photo.url ? <img src={photo.url} alt={t.yourPhoto} /> : <div class="skeleton" style={{ height: '100%' }} />}
               <span class="badge" role="status" aria-live="polite">
@@ -156,6 +157,11 @@ export function CreateScreen({ slug }: { slug: string }) {
                 }} />
               </label>
             </div>
+        )}
+        </div>
+        <div class="pane pane-side">
+        {photo.kind !== 'none' && (
+          <>
             {photo.kind === 'rejected' ? (
               <p class="message error" role="alert">{rejectionText[photo.reason]}</p>
             ) : (
@@ -183,6 +189,7 @@ export function CreateScreen({ slug }: { slug: string }) {
             {state.busy ? '…' : label}
           </button>
           {action === 'generate' && <p class="note">{t.videoFailedQ} {t.coinsComeBack}</p>}
+        </div>
         </div>
       </main>
     </>

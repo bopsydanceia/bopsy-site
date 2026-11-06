@@ -4,6 +4,7 @@
 // vite.config.ts decides (__BOPSY_LIVE__), refuses a secret key and a live
 // build with one of the four missing.
 import type { PublicKeys } from './core/keys';
+import { LOCALE, type Locale } from './locale';
 
 declare const __BOPSY_LIVE__: boolean;
 
@@ -28,11 +29,16 @@ export const FREE_PREVIEW: boolean =
   String(env.VITE_FREE_PREVIEW ?? '') === '1' ||
   (DEMO && typeof location !== 'undefined' && /(^|,)free-preview(,|$)/.test(new URLSearchParams(location.search).get('sim') ?? ''));
 
-/** Public pages of bopsy-site, next to app/ (D106). */
-export const LINKS = {
-  terms: '../terms/',
-  privacy: '../privacy/',
-  support: '../support/',
-  deleteData: '../delete-data/',
-  home: '../',
-};
+/** Public pages of bopsy-site, next to app/ (D106); the French ones live under fr/. */
+export function linksFor(locale: Locale) {
+  const base = locale === 'fr' ? '../fr/' : '../';
+  return {
+    terms: `${base}terms/`,
+    privacy: `${base}privacy/`,
+    support: `${base}support/`,
+    deleteData: `${base}delete-data/`,
+    home: '../',
+  };
+}
+
+export const LINKS = linksFor(LOCALE);

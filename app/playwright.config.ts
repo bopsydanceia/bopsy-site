@@ -15,7 +15,7 @@ export default defineConfig({
     channel: 'chrome',
     baseURL: 'http://localhost:4173/',
     timezoneId: 'America/New_York',
-    locale: 'en-US',
+    locale: 'en-US', // navigator.languages: the app runs in English (src/locale.ts)
     screenshot: 'only-on-failure',
     trace: 'off',
   },

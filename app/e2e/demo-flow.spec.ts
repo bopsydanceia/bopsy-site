@@ -27,12 +27,12 @@ async function storedPhotos(page: Page): Promise<number> {
 
 test('demo: from a photo to a paid video', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByRole('heading', { name: 'Choose a dance' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pick a trend' })).toBeVisible();
   await expect(page.getByText('Demo', { exact: true })).toBeVisible();
   await shot(page, '01-dances');
   await page.getByRole('link', { name: 'Street Bounce' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Create a dance' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Join the trend' })).toBeVisible();
   await expect(page.getByText('Whole body in the frame', { exact: true })).toBeVisible();
   await shot(page, '02-add-photo');
   await page.getByRole('button', { name: 'Man' }).click();
@@ -51,7 +51,7 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   await page.getByRole('button', { name: 'Make my video' }).click();
 
   // About 10 s of preparing, then the locked video; nothing is generated before payment.
-  await expect(page.getByRole('heading', { name: 'Getting your dance ready' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Getting your trend ready' })).toBeVisible();
   await expect(page.getByRole('progressbar')).toBeVisible();
   await shot(page, '05-preparing');
   await expect(page.getByRole('heading', { name: 'Your video is one tap away' })).toBeVisible({ timeout: 15_000 });
@@ -70,7 +70,7 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   await page.getByRole('button', { name: 'Continue' }).click();
 
   await expect(page.getByRole('heading', { name: 'Where should we send your video?' })).toBeVisible();
-  const news = page.getByLabel('Email me when the iPhone app is out and when new dances drop.');
+  const news = page.getByLabel('Email me when the iPhone app is out and when new trends drop.');
   await expect(news).not.toBeChecked();
   await news.check();
   await page.getByLabel('Email', { exact: true }).fill('dancer@example.com');
@@ -102,7 +102,7 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   await page.getByRole('button', { name: 'OK' }).click();
 
   await page.getByRole('button', { name: 'Make another' }).click();
-  await expect(page.getByText('Pick a dance for your photo.')).toBeVisible();
+  await expect(page.getByText('Pick a trend for your photo.')).toBeVisible();
   await page.getByRole('link', { name: 'Hip Sway' }).click();
   await expect(page.getByText('Full body detected')).toBeVisible();
   await expect(page.getByLabel("This is me, or I have this person's permission to use their photo.")).not.toBeChecked();
@@ -115,14 +115,14 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   await expect(page.getByText('Signed in as dancer@example.com')).toBeVisible();
   await shot(page, '11-account');
   await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByRole('heading', { name: 'Choose a dance' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pick a trend' })).toBeVisible();
 });
 
 test('demo: a refused photo shows its reason, an EU buyer sees the waiver', async ({ browser }) => {
   const context = await browser.newContext({ timezoneId: 'Europe/Paris', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await context.newPage();
   await page.goto('./#/create/paws-up');
-  await expect(page.getByRole('heading', { name: 'Create a dance' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Join the trend' })).toBeVisible();
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
   await page.locator('input[type=file]:not([capture])').first().setInputFiles({ name: 'group-photo.png', mimeType: 'image/png', buffer: png });
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
@@ -155,7 +155,7 @@ test('demo: a refused photo shows its reason, an EU buyer sees the waiver', asyn
 
 test('demo ?sim=: check limit then Try again, CAPTCHA refused then passed, report limit', async ({ page }) => {
   await page.goto('./?sim=check-limit,captcha-preview,report-limit,free-preview#/create/street-bounce');
-  await expect(page.getByRole('heading', { name: 'Create a dance' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Join the trend' })).toBeVisible();
   await page.getByRole('button', { name: 'Man' }).click();
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
   await expect(page.getByText(/^Too many photo checks\. Try again in \d+ s\./)).toBeVisible();
@@ -200,4 +200,19 @@ test('demo ?sim=: free previews (when on) limited per IP, then off; the main but
   await page.getByRole('button', { name: 'Generate free preview' }).click();
   await expect(page.getByText('Free previews are paused right now. Unlock the full video to make yours.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Unlock Bopsy' })).toBeVisible();
+});
+
+test('demo ?lang=fr: the catalogue in French, the choice kept, the switch back to English', async ({ page }) => {
+  await page.goto('./?lang=fr');
+  await expect(page.getByRole('heading', { name: 'Choisis ta trend' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tes animaux vont adorer' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+  await page.goto('./#/create/street-bounce'); // no ?lang= any more: the stored choice
+  await page.getByRole('button', { name: 'Homme' }).click();
+  await expect(page.getByRole('link', { name: 'Confidentialité' })).toHaveAttribute('href', '../fr/privacy/');
+  await page.goto('./#/account');
+  await expect(page.getByRole('heading', { name: 'Mon compte' })).toBeVisible();
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('heading', { name: 'My account' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });

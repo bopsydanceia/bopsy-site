@@ -66,7 +66,7 @@ export function ReadyScreen() {
   return (
     <>
       <Header back={`/create/${dance.slug}`} />
-      <main>
+      <main class="locked">
         <button type="button" class="teaser" aria-label={t.teaserPlayLabel} onClick={() => void flow.unlock()}>
           {picture && <img src={picture} alt="" />}
           <span class="lock" aria-hidden="true">

@@ -20,7 +20,7 @@ export function ReportSheet({ videoId, onClose }: { videoId: string; onClose: ()
     return (
       <Sheet title={t.reportTitle} onClose={onClose}>
         <p role="status">{t.reportThanks}</p>
-        <button type="button" class="btn btn-secondary btn-block" onClick={onClose}>OK</button>
+        <button type="button" class="btn btn-secondary btn-block" onClick={onClose}>{t.ok}</button>
       </Sheet>
     );
   }
@@ -30,7 +30,7 @@ export function ReportSheet({ videoId, onClose }: { videoId: string; onClose: ()
       <Sheet title={t.reportTitle} onClose={onClose}>
         <p role="alert">{t.reportLimited(formatWait(state.until, Date.now()))}</p>
         <p class="muted small"><a href={LINKS.support} target="_blank" rel="noopener">{t.contactSupport}</a></p>
-        <button type="button" class="btn btn-secondary btn-block" onClick={onClose}>OK</button>
+        <button type="button" class="btn btn-secondary btn-block" onClick={onClose}>{t.ok}</button>
       </Sheet>
     );
   }

@@ -8,7 +8,7 @@ import { useLoad, useStore } from '../hooks';
 
 function Tile({ video }: { video: Video }) {
   const dance = danceById(video.danceId);
-  const name = dance?.name ?? 'Dance';
+  const name = dance?.name ?? t.danceFallback;
   const label =
     video.status === 'ready' ? name : video.status === 'failed' ? t.tileFailed(name) : video.status === 'queued' ? t.tileQueued(name) : t.tileRendering(name);
   const href = video.status === 'ready' ? `#/video/${video.id}` : `#/generating/${video.id}`;
@@ -27,7 +27,7 @@ export function VideosScreen() {
   return (
     <>
       <Header title={t.myVideos} back="/" />
-      <main>
+      <main class="wide">
         {!signedIn ? (
           <div class="empty">
             <p class="title-sm">{t.emptyTitle}</p>

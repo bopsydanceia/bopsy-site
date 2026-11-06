@@ -74,7 +74,7 @@ export function UnlockScreen() {
   return (
     <>
       <Header back="/" />
-      <main>
+      <main class="narrow">
         {state.step === 'email' ? (
           <form onSubmit={(event) => void send(event)} noValidate>
             <h1 class="title">{t.signInTitle}</h1>
