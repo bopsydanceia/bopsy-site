@@ -7,6 +7,8 @@ export interface DanceRow {
   name: string;
   family: string | null;
   preview_url: string | null;
+  /** Absent when the catalogue was read without it (anon not granted the column yet). */
+  preview_video_url?: string | null;
   cost: number;
   duration_seconds: number;
   is_new: boolean;
@@ -15,6 +17,8 @@ export interface DanceRow {
 }
 
 export const DANCE_COLUMNS = 'id,slug,name,family,preview_url,cost,duration_seconds,is_new,is_hot,sort';
+/** The catalogue with the demo clips of the cards (needs the column grant of preview_video_url to anon). */
+export const DANCE_COLUMNS_WITH_VIDEO = `${DANCE_COLUMNS},preview_video_url`;
 
 const FAMILIES: DanceFamily[] = ['trends', 'memes', 'party', 'victory', 'pets'];
 
@@ -30,6 +34,7 @@ export function danceFromRow(row: DanceRow): Dance {
     name: row.name,
     family: FAMILIES.includes(row.family as DanceFamily) ? (row.family as DanceFamily) : 'trends',
     posterUrl: publicUrl(row.preview_url),
+    previewVideoUrl: publicUrl(row.preview_video_url ?? null),
     cost: row.cost,
     durationSeconds: row.duration_seconds,
     isNew: row.is_new,

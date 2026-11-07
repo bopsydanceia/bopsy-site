@@ -11,6 +11,8 @@ export interface Dance {
   name: string;
   family: DanceFamily;
   posterUrl: string | null;
+  /** Muted looping demo of the move (dances.preview_video_url), played by the catalogue cards; null: poster only. */
+  previewVideoUrl: string | null;
   cost: number;
   durationSeconds: number;
   isNew: boolean;

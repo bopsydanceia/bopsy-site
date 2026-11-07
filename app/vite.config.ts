@@ -27,7 +27,7 @@ function firstScreen(live: boolean, supabaseUrl: string): Plugin {
       }
       const hints = live
         ? `<link rel="preconnect" href="${new URL(supabaseUrl).origin}" crossorigin>`
-        : ['man-dance', 'dog-dance'].map((poster) => `<link rel="preload" as="image" href="./demo/${poster}.webp" fetchpriority="high">`).join('\n');
+        : ['man-dance', 'woman-dance'].map((poster) => `<link rel="preload" as="image" href="./demo/${poster}.webp" fetchpriority="high">`).join('\n');
       source = source.replace('<link rel="preload"', `${hints}\n<link rel="preload"`);
       html.source = source;
     },

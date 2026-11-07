@@ -41,10 +41,11 @@ const RICH = new Set(['rich@example.com']);
 
 const dances = [
   ['street-bounce', 'Street Bounce', 'trends', 'man-dance', true, false],
-  ['hip-sway', 'Hip Sway', 'trends', 'dog-dance', false, true],
-  ['kitchen-boogie', 'Kitchen Boogie', 'pets', 'cat-dance', false, false],
+  ['hip-sway', 'Hip Sway', 'trends', 'woman-dance', false, true],
+  ['kitchen-boogie', 'Kitchen Boogie', 'party', 'mamie-dance', false, false],
 ].map(([slug, name, family, poster, isNew, isHot], index) => ({
   id: `00000000-0000-4000-8000-00000000000${index + 1}`, slug, name, family, preview_url: `${APP}/demo/${poster}.webp`,
+  preview_video_url: `${APP}/demo/${poster.replace('-dance', '-result')}.mp4`,
   cost: 60, duration_seconds: 8, is_new: isNew, is_hot: isHot, sort: index + 1,
 }));
 

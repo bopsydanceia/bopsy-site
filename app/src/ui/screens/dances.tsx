@@ -8,6 +8,11 @@
 // (TikTok, Instagram) can leave such an image unpainted. Loading the first
 // rows eagerly fixes it; a poster that fails anyway is hidden so the card
 // shows its gradient and name instead of a blank box.
+//
+// D145: a card with a demo clip plays it muted, in a loop, over its poster
+// while it is half visible (card-motion.ts, loaded after the first paint:
+// never in the first chunk; caps, Save-Data and reduced motion there).
+import { useEffect, useRef } from 'preact/hooks';
 import { t } from '../../copy';
 import type { Dance, DanceFamily } from '../../core/types';
 import { app, loadCatalog } from '../app-state';
@@ -21,6 +26,24 @@ const EAGER_FAMILIES = 2;
 
 function hideBroken(event: Event) {
   (event.currentTarget as HTMLImageElement).hidden = true;
+}
+
+function CardVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    let stop: (() => void) | null = null;
+    let gone = false;
+    void import('../card-motion').then(({ watchCardVideo }) => {
+      if (!gone) stop = watchCardVideo(video, src);
+    });
+    return () => {
+      gone = true;
+      stop?.();
+    };
+  }, [src]);
+  return <video ref={ref} class="card-video" muted loop playsInline preload="none" disablePictureInPicture aria-hidden="true" tabIndex={-1} />;
 }
 
 function DanceCard({ dance, eager, priority }: { dance: Dance; eager: boolean; priority: boolean }) {
@@ -39,6 +62,7 @@ function DanceCard({ dance, eager, priority }: { dance: Dance; eager: boolean; p
           onError={hideBroken}
         />
       )}
+      {dance.previewVideoUrl && <CardVideo src={dance.previewVideoUrl} />}
       <span class="card-name">{dance.name}</span>
       {tag && <span class={`tag ${tag}`}>{tag === 'new' ? t.badgeNew : t.badgeHot}</span>}
     </a>

@@ -15,11 +15,11 @@ import sys
 from PIL import Image
 src, out = sys.argv[1], sys.argv[2]
 # Dance posters: 4:5, 360 x 450, WebP.
-for name in ["man-dance", "dog-dance", "mamie-dance", "woman-dance", "cat-dance"]:
+for name in ["man-dance", "mamie-dance", "woman-dance"]:
     im = Image.open(f"{src}/{name}.jpg").convert("RGB").resize((360, 450), Image.LANCZOS)
     im.save(f"{out}/{name}.webp", "WEBP", quality=68, method=6)
 # Sample photos for the demo (the file name drives the fake photo check).
-for name in ["man-sit", "dog-sit", "mamie-sit"]:
+for name in ["man-sit", "mamie-sit"]:
     im = Image.open(f"{src}/{name}.jpg").convert("RGB").resize((640, 800), Image.LANCZOS)
     im.save(f"{out}/{name}.jpg", "JPEG", quality=78, optimize=True, progressive=True)
 EOF
@@ -41,7 +41,7 @@ clip() { # subject, sit photo or "", seconds, size, crf, out
   fi
 }
 
-for pair in man:man-sit dog:dog-sit mamie:mamie-sit cat: woman:; do
+for pair in man:man-sit mamie:mamie-sit woman:; do
   subject="${pair%%:*}"; sit="${pair#*:}"
   clip "$subject" "$sit" 8 432:540 30 "$OUT/$subject-result.mp4"
   clip "$subject" "" 2 384:480 34 "$OUT/$subject-preview.mp4"

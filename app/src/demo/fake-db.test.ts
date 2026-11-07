@@ -60,8 +60,7 @@ describe('photo check by file name', () => {
 
   test.each([
     ['man-sit.jpg', 'man'],
-    ['dog-sit.jpg', 'dog'],
-    ['kitten.heic', 'cat'],
+    ['woman-dance.heic', 'woman'],
     ['mamie-sit.jpg', 'mamie'],
     ['IMG_0042.JPG', 'man'],
   ])('%s is accepted (clip %s)', (name, clip) => {

@@ -78,8 +78,6 @@ export function judgePhoto(fileName: string): { failure: DemoFailure } | { rejec
     if (pattern.test(name)) return FAILURES.includes(code) ? { failure: code as DemoFailure } : { rejection: code as PhotoRejection };
   }
   if (/mamie|grandma|granny|nana/.test(name)) return { clip: 'mamie' };
-  if (/dog|puppy|doggo/.test(name)) return { clip: 'dog' };
-  if (/cat|kitten|kitty/.test(name)) return { clip: 'cat' };
   if (/woman|girl|lady|her/.test(name)) return { clip: 'woman' };
   return { clip: 'man' };
 }

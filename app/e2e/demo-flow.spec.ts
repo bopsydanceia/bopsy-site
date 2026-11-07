@@ -121,17 +121,17 @@ test('demo: from a photo to a paid video', async ({ page }) => {
 test('demo: a refused photo shows its reason, an EU buyer sees the waiver', async ({ browser }) => {
   const context = await browser.newContext({ timezoneId: 'Europe/Paris', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await context.newPage();
-  await page.goto('./#/create/paws-up');
+  await page.goto('./#/create/arms-up');
   await expect(page.getByRole('heading', { name: 'Join the trend' })).toBeVisible();
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
   await page.locator('input[type=file]:not([capture])').first().setInputFiles({ name: 'group-photo.png', mimeType: 'image/png', buffer: png });
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
-  await expect(page.getByText('We found more than one person or pet. Use a photo with just one.')).toBeVisible();
+  await expect(page.getByText('We found more than one person. Use a photo with just one.')).toBeVisible();
   await expect(page.getByText("Can't use this photo")).toBeVisible();
   await shot(page, '12-rejected');
 
   // A good photo, then straight to the paywall in an EU time zone.
-  await page.locator('input[type=file]').first().setInputFiles({ name: 'my-dog.png', mimeType: 'image/png', buffer: png });
+  await page.locator('input[type=file]').first().setInputFiles({ name: 'my-photo.png', mimeType: 'image/png', buffer: png });
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
   await expect(page.getByText('Full body detected')).toBeVisible();
   await page.getByRole('button', { name: 'Make my video' }).click();
@@ -194,7 +194,7 @@ test('demo ?sim=: free previews (when on) limited per IP, then off; the main but
   });
   await page.goto('./?sim=preview-off,free-preview#/create/hip-sway');
   await page.reload();
-  await page.getByRole('button', { name: 'Dog' }).click();
+  await page.getByRole('button', { name: 'Grandma' }).click();
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
   await expect(page.getByText('Full body detected')).toBeVisible();
   await page.getByRole('button', { name: 'Generate free preview' }).click();
@@ -205,7 +205,7 @@ test('demo ?sim=: free previews (when on) limited per IP, then off; the main but
 test('demo ?lang=fr: the catalogue in French, the choice kept, the switch back to English', async ({ page }) => {
   await page.goto('./?lang=fr');
   await expect(page.getByRole('heading', { name: 'Choisis ta trend' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Tes animaux vont adorer' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pour lancer la soirée' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
   await page.goto('./#/create/street-bounce'); // no ?lang= any more: the stored choice
   await page.getByRole('button', { name: 'Homme' }).click();
