@@ -3,18 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bopsy · Put anyone in today’s trends</title>
-<meta name="description" content="Turn one photo into the trend everyone’s posting right now. People, dogs and cats. Ready in about 2 minutes.">
-<meta name="theme-color" content="#120E18">
+<title>Bopsy · You, in today’s trends</title>
+<meta name="description" content="One photo of you becomes a short video of the trend everyone’s posting right now. Ready in about 2 minutes once unlocked.">
+<meta name="theme-color" content="#0D0B0E">
 <!-- Web app address (D116): app/ is the Vite build published by .github/workflows/pages.yml. Empty: the button says "Coming soon". -->
 <meta name="bopsy-app-url" content="app/">
-<meta property="og:title" content="Bopsy · Put anyone in today’s trends">
-<meta property="og:description" content="Turn one photo into the trend everyone’s posting right now.">
-<meta property="og:image" content="assets/man-dance.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bopsyia.com/">
+<meta property="og:title" content="Bopsy · You, in today’s trends">
+<meta property="og:description" content="One photo of you, a short video of the trend of the moment.">
+<meta property="og:image" content="https://bopsyia.com/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/bricolage-800-latin.woff2" crossorigin>
-<link rel="preload" as="image" href="assets/demo/man-poster.webp">
+<link rel="preload" as="image" href="assets/wall/groove-jam.webp" fetchpriority="high">
+<link rel="preload" as="image" href="assets/wall/dance-moves.webp" fetchpriority="high">
+<link rel="preconnect" href="https://epwxusmvjeyeljyqzzda.supabase.co" crossorigin>
 <script>
 // Language before first paint: ?lang= wins (and is remembered), then the saved choice, then the browser.
 // English is in the HTML (crawlers, link previews); French hides the page until the swap at the end of body.
@@ -31,325 +38,199 @@
 <style>
 @font-face { font-family: "Bricolage Grotesque"; font-weight: 800; font-style: normal; font-display: swap; src: url(assets/fonts/bricolage-800-latin.woff2) format("woff2"); }
 :root {
-  --bg: #120E18; --surface: #1C1626; --surface-2: #2A2234; --line: #352C40; --text: #FBF7F2; --muted: #B3A9BF;
-  --accent: #FF4D8D; --cta: #D42A66; --cta-hi: #E8377A; --coin: #FFD23F; --ink: #1a1300;
+  --bg: #0D0B0E; --ink: #F6F1EA; --muted: #A79FAB; --line: #2A2530; --tile: #1B171D;
+  --pink: #FF4D8D; --pink-hi: #FF6C9F; --on-pink: #14060C;
   --display: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --gutter: max(16px, env(safe-area-inset-left));
   color-scheme: dark;
 }
 .i18n-wait body { visibility: hidden; }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; background: var(--bg); scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 var(--body); overflow-x: hidden; }
+html { -webkit-text-size-adjust: 100%; background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 var(--body); overflow-x: hidden; }
 img, video { display: block; max-width: 100%; }
 a { color: inherit; }
-:focus-visible { outline: 3px solid var(--coin); outline-offset: 3px; border-radius: 6px; }
-.skip { position: absolute; left: -9999px; top: 8px; z-index: 50; background: var(--coin); color: var(--ink); padding: 10px 14px; border-radius: 10px; font-weight: 700; }
+h1, h2, h3, p, ol, dl { margin: 0; }
+:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 50; background: var(--ink); color: var(--bg); padding: 10px 14px; font-weight: 700; }
 .skip:focus { left: 8px; }
-.wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 var(--gutter); }
+.display { font-family: var(--display); font-weight: 800; letter-spacing: -0.035em; line-height: 0.95; }
 
 /* Header */
-.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) 0 6px; }
-.brand { font: 800 30px/1 var(--display); letter-spacing: -0.05em; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
-.brand i { font-style: normal; color: var(--accent); }
-.top-right { display: flex; align-items: center; gap: 10px; }
-.lang { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; }
-.lang a { display: grid; place-items: center; min-width: 44px; min-height: 38px; border-radius: 999px; font: 700 13px/1 var(--body); letter-spacing: .06em; color: var(--muted); text-decoration: none; }
-.lang a[aria-current="true"] { background: var(--text); color: var(--bg); }
-.top .cta-sm { display: none; }
+.top { display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding-top: env(safe-area-inset-top); }
+.brand { font: 800 28px/1 var(--display); letter-spacing: -0.05em; text-decoration: none; padding: 8px 0; }
+.lang { display: flex; gap: 4px; font-size: 14px; font-weight: 700; letter-spacing: 0.04em; }
+.lang a { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; justify-content: center; color: var(--muted); text-decoration: none; }
+.lang a[aria-current="true"] { color: var(--ink); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 
-/* Buttons */
-.cta {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 60px; padding: 0 28px; border-radius: 30px;
-  background: var(--cta); color: #fff; font: 700 18px/1.1 var(--body); text-decoration: none; text-align: center;
-  box-shadow: 0 12px 30px rgba(212,42,102,.4), inset 0 -3px 0 rgba(0,0,0,.18); transition: transform .15s ease, background .15s ease;
-}
-.cta:hover { background: var(--cta-hi); transform: translateY(-2px); }
-.cta:active { transform: translateY(1px); }
-.cta svg { width: 20px; height: 20px; flex: none; }
-.cta[aria-disabled="true"] { background: var(--surface-2); color: var(--muted); box-shadow: none; pointer-events: none; }
-.cta-sm { min-height: 44px; font-size: 15px; padding: 0 18px; box-shadow: none; }
-.cta-block { display: flex; width: 100%; }
+/* Video tiles: the poster under, the clip over it once it plays */
+.tile { position: relative; margin: 0; overflow: hidden; background: var(--tile); }
+.tile img, .tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile video { opacity: 0; transition: opacity 200ms linear; }
+.tile video.on { opacity: 1; }
+.tile figcaption { position: absolute; left: 10px; right: 10px; bottom: 9px; font-size: 14px; font-weight: 700; line-height: 1.2; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 0, 0, 0.45); }
 
-/* Hero */
-.hero { padding: 10px 0 8px; display: grid; gap: 22px; }
-.eyebrow { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--body); color: var(--coin); background: rgba(255,210,63,.1); border: 1px solid rgba(255,210,63,.3); border-radius: 999px; padding: 8px 12px; margin: 6px 0 14px; }
-.eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(255,77,141,.25); animation: pulse 1.6s ease-in-out infinite; }
-h1 { font: 800 clamp(44px, 13.5vw, 88px)/.94 var(--display); letter-spacing: -0.05em; margin: 0 0 14px; text-wrap: balance; }
-h1 .hl { color: var(--accent); display: inline-block; position: relative; z-index: 0; }
-h1 .hl::after { content: ""; position: absolute; left: 2%; right: 2%; bottom: .02em; height: .14em; background: var(--coin); border-radius: 99px; transform: rotate(-1.5deg); z-index: -1; opacity: .9; }
-.lede { color: var(--muted); font-size: 18px; margin: 0 0 22px; max-width: 34em; }
-.lede b { color: var(--text); }
-.hero-cta { display: grid; gap: 10px; }
-.note { color: var(--muted); font-size: 14px; margin: 0; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
-.chips li { font-size: 14px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; }
-
-/* Phone demo */
-.stage { position: relative; display: grid; place-items: center; padding: 8px 0 14px; }
-.phone {
-  position: relative; width: min(100%, 360px); aspect-ratio: 4 / 5; border-radius: 30px; overflow: hidden; background: var(--surface);
-  box-shadow: 0 0 0 6px var(--surface-2), 0 30px 80px rgba(255,77,141,.25), 0 10px 30px rgba(0,0,0,.5);
-}
-.phone video, .card video { width: 100%; height: 100%; object-fit: cover; background: var(--surface); }
-.tag { position: absolute; font: 800 12px/1 var(--body); letter-spacing: .1em; border-radius: 999px; padding: 7px 11px; }
-.tag-after { right: 12px; top: 12px; background: var(--coin); color: var(--ink); }
-.before { position: absolute; left: 12px; bottom: 12px; width: 30%; aspect-ratio: 4 / 5; border-radius: 16px; overflow: hidden; border: 3px solid var(--text); box-shadow: 0 10px 24px rgba(0,0,0,.5); transform: rotate(-4deg); }
-.before img { width: 100%; height: 100%; object-fit: cover; }
-.before .tag { left: 6px; top: 6px; padding: 4px 7px; font-size: 10px; background: var(--bg); color: var(--text); }
-.arrow { position: absolute; left: calc(30% + 18px); bottom: 34px; width: 54px; height: 34px; color: var(--text); filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); }
-.sticker { position: absolute; font: 800 15px/1 var(--display); padding: 10px 14px; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.35); white-space: nowrap; }
-.s1 { background: var(--accent); color: #fff; top: 0; left: 2%; transform: rotate(-7deg); animation: bob 3s ease-in-out infinite; }
-.s2 { background: var(--text); color: var(--bg); bottom: 0; right: 2%; transform: rotate(5deg); animation: bob 3.4s ease-in-out .6s infinite; }
-
-/* Marquee */
-.band-clip { overflow: hidden; padding: 4px 0 18px; }
-.band { margin: 26px 0 0; background: var(--coin); color: var(--ink); transform: rotate(-2deg); overflow: hidden; padding: 12px 0; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
-.band-track { display: flex; width: max-content; animation: slide 22s linear infinite; }
-.band span { font: 800 22px/1 var(--display); letter-spacing: -0.02em; padding: 0 14px; white-space: nowrap; }
-.band span::after { content: "✦"; margin-left: 28px; color: var(--cta); }
+/* Hero: the wall, then one headline and one button */
+.wall { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+.wall .tile { height: min(25vh + 8px, 230px); min-height: 170px; }
+.wall .tile:nth-child(n+5) { display: none; }
+.hero-text { padding-top: 22px; padding-bottom: 28px; }
+h1 { font-size: clamp(40px, 11.4vw, 104px); }
+h1 span { display: block; }
+.lede { margin-top: 16px; max-width: 34em; color: var(--muted); font-size: 17px; }
+.lede b { color: var(--ink); font-weight: 600; }
+.cta { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 28px; border-radius: 999px; background: var(--pink); color: var(--on-pink); font: 800 19px/1 var(--display); letter-spacing: -0.01em; text-decoration: none; }
+.cta:hover { background: var(--pink-hi); }
+.cta[aria-disabled="true"] { background: var(--line); color: var(--muted); pointer-events: none; }
+.act { margin-top: 22px; }
+.act .cta { width: 100%; }
+.fine { margin-top: 10px; font-size: 14px; color: var(--muted); }
 
 /* Sections */
-section { padding: 56px 0 0; }
-h2 { font: 800 clamp(34px, 9vw, 56px)/1 var(--display); letter-spacing: -0.045em; margin: 0 0 10px; text-wrap: balance; }
-.sub { color: var(--muted); font-size: 17px; margin: 0 0 22px; max-width: 36em; }
+section { border-top: 1px solid var(--line); padding: 40px 0; }
+h2 { font-size: clamp(34px, 8.6vw, 64px); }
+.sub { margin-top: 10px; color: var(--muted); }
 
-/* Gallery */
-.gallery { display: grid; grid-auto-flow: column; grid-auto-columns: 62%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px var(--gutter) 14px; margin: 0 calc(-1 * var(--gutter)); list-style: none; scrollbar-width: none; }
-.gallery::-webkit-scrollbar { display: none; }
-.card { position: relative; scroll-snap-align: center; aspect-ratio: 4 / 5; border-radius: 22px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); }
-.card:nth-child(odd) { transform: rotate(-1.2deg); }
-.card:nth-child(even) { transform: rotate(1.2deg); }
-.card .label { position: absolute; left: 10px; bottom: 10px; font: 800 18px/1 var(--display); background: var(--bg); color: var(--text); border-radius: 12px; padding: 8px 11px; }
-.card .before { width: 34%; left: auto; right: 10px; bottom: auto; top: 10px; border-width: 2px; border-radius: 12px; transform: rotate(4deg); }
-.swipe { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+.steps { list-style: none; padding: 0; margin-top: 24px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 16px 0; border-top: 1px solid var(--line); font-size: 19px; line-height: 1.35; }
+.steps li:first-child { border-top: 0; }
+.steps li::before { content: counter(s); font: 800 34px/0.9 var(--display); color: var(--pink); }
 
-/* Steps */
-.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; counter-reset: s; }
-.steps li { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px 20px 20px 84px; min-height: 96px; }
-.steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 18px; top: 18px; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 16px; font: 800 26px/1 var(--display); background: var(--accent); color: #fff; transform: rotate(-6deg); }
-.steps li:nth-child(2)::before { background: var(--coin); color: var(--ink); transform: rotate(5deg); }
-.steps li:nth-child(3)::before { background: var(--text); color: var(--bg); }
-.steps h3 { font: 800 21px/1.1 var(--display); letter-spacing: -0.02em; margin: 0 0 4px; }
-.steps p { margin: 0; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; margin-top: 24px; }
+.grid .tile { aspect-ratio: 540 / 822; }
+.more { margin-top: 16px; color: var(--muted); font-size: 15px; }
 
-/* Pricing */
-.price { position: relative; background: linear-gradient(140deg, #3a1530 0%, var(--surface) 55%); border: 1px solid #5a2547; border-radius: 28px; padding: 28px 22px; overflow: hidden; }
-.price::before { content: ""; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(var(--coin), transparent 70%); opacity: .22; }
-.price h2 { position: relative; }
-.ticks { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 10px; position: relative; }
-.ticks li { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; }
-.ticks li::before { content: ""; flex: none; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--coin) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%231a1300' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; }
-.offer { display: inline-block; position: relative; font: 800 14px/1 var(--body); letter-spacing: .06em; background: var(--accent); color: #fff; border-radius: 999px; padding: 8px 12px; margin: 0 0 14px; transform: rotate(-2deg); }
-
-/* FAQ */
-.faq { display: grid; gap: 10px; }
-.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
-.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 14px; min-height: 60px; padding: 14px 18px; font-weight: 700; font-size: 17px; }
+.faq { margin-top: 18px; }
+.faq details { border-top: 1px solid var(--line); }
+.faq details:last-child { border-bottom: 1px solid var(--line); }
+.faq summary { display: flex; justify-content: space-between; gap: 16px; padding: 18px 0; font-weight: 700; font-size: 18px; cursor: pointer; list-style: none; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); color: var(--coin); font: 800 22px/1 var(--body); transition: transform .2s ease; }
-.faq details[open] summary::after { transform: rotate(45deg); }
-.faq details p { margin: 0; padding: 0 18px 18px; color: var(--muted); }
+.faq summary::after { content: "+"; font: 800 24px/1 var(--display); color: var(--pink); }
+.faq details[open] summary::after { content: "−"; }
+.faq p { padding: 0 0 20px; color: var(--muted); max-width: 40em; }
 
-/* Final CTA */
-.final { text-align: center; padding: 72px 0 8px; }
-.final h2 { font-size: clamp(40px, 11vw, 76px); }
-.final .sub { margin-left: auto; margin-right: auto; }
-.final .cta { width: min(100%, 420px); }
-.trust { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; margin: 18px 0 0; }
-.trust svg { width: 18px; height: 18px; color: var(--coin); flex: none; }
+.end { text-align: left; padding: 56px 0 64px; }
+.end h2 { font-size: clamp(46px, 13vw, 132px); }
+.end .act { margin-top: 26px; }
 
-/* Footer */
-footer { margin: 56px 0 0; padding: 22px 0 calc(110px + env(safe-area-inset-bottom)); border-top: 1px solid var(--surface-2); color: var(--muted); font-size: 14px; }
-footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin: 0 0 8px; }
-footer nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); }
-footer nav a:hover { color: var(--text); }
-.todo { background: #4a3d00; color: #ffe27a; border-radius: 4px; padding: 0 4px; }
+footer { border-top: 1px solid var(--line); padding: 28px 0 calc(110px + env(safe-area-inset-bottom)); color: var(--muted); font-size: 14px; }
+footer nav { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 14px; }
+footer nav a { display: inline-flex; min-height: 40px; align-items: center; text-decoration: none; }
+footer nav a:hover { color: var(--ink); text-decoration: underline; }
 
-/* Sticky CTA (phones) */
-.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(18,14,24,.92) 30%); transform: translateY(110%); transition: transform .25s ease; }
-.dock.on { transform: none; }
-.dock .cta { width: 100%; min-height: 56px; }
+/* Phone: the button stays reachable once the first one has scrolled away */
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); transform: translateY(110%); transition: transform 200ms ease; }
+.dock.show { transform: none; }
+.dock .cta { width: 100%; }
 
-@keyframes slide { to { transform: translateX(-50%); } }
-@keyframes bob { 50% { translate: 0 -6px; } }
-@keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(255,77,141,0); } }
-
-@media (min-width: 600px) {
-  .gallery { grid-auto-columns: 40%; }
-  .hero-cta { grid-template-columns: auto; justify-content: start; }
+@media (min-width: 640px) {
+  .wall { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .wall .tile:nth-child(n+5) { display: block; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .act .cta { width: auto; }
 }
-@media (min-width: 960px) {
-  .top { padding-top: 22px; }
-  .top .cta-sm { display: inline-flex; }
-  .hero { grid-template-columns: 1.08fr .92fr; align-items: center; gap: 48px; padding: 36px 0 16px; min-height: min(78vh, 700px); }
-  h1 { font-size: clamp(64px, 7.4vw, 96px); }
-  .lede { font-size: 20px; }
-  .phone { width: 380px; }
-  .s1 { left: 0; top: 8%; }
-  .s2 { right: 0; bottom: 6%; }
-  section { padding-top: 96px; }
-  .band span { font-size: 28px; }
-  .gallery { grid-auto-flow: row; grid-template-columns: repeat(4, 1fr); overflow: visible; margin: 0; padding: 4px 0 0; gap: 20px; }
-  .swipe { display: none; }
-  .steps { grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .steps li { padding: 88px 24px 26px; min-height: 0; }
-  .steps li::before { left: 24px; top: 22px; }
-  .split { display: grid; grid-template-columns: 1fr 1.1fr; gap: 40px; align-items: start; }
-  .price { padding: 44px 40px; }
-  .final { padding-top: 120px; }
+@media (min-width: 900px) {
+  :root { --gutter: 40px; }
+  .top { min-height: 72px; }
+  .brand { font-size: 32px; }
+  .wall { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .wall .tile { height: min(48vh, 470px); min-height: 300px; }
+  .hero-text { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 48px; align-items: end; padding-top: 36px; padding-bottom: 56px; }
+  h1 { font-size: clamp(60px, 5.8vw, 96px); }
+  .lede { margin-top: 0; font-size: 19px; }
+  section { padding: 72px 0; }
+  .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 48px; }
+  .steps { margin-top: 0; }
+  .steps li { grid-template-columns: 64px 1fr; padding: 22px 0; font-size: 24px; }
+  .steps li::before { font-size: 44px; }
+  .grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .faq { margin-top: 0; }
+  .end { padding: 96px 0 104px; }
+  .end .wrap { display: flex; align-items: end; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+  .end .act { margin-top: 0; }
+  footer { padding-bottom: 40px; display: block; }
+  footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  footer nav { margin-bottom: 0; }
   .dock { display: none; }
-  footer { padding-bottom: calc(32px + env(safe-area-inset-bottom)); display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
-  footer nav { margin: 0; }
 }
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-  .band-track { transform: none; }
-}
+@media (prefers-reduced-motion: reduce) { .dock, .tile video { transition: none; } }
 </style>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
-<div class="wrap">
-  <header class="top">
-    <a class="brand" href="./" aria-label="Bopsy">bops<i>y</i></a>
-    <div class="top-right">
-      <nav class="lang" aria-label="Language" data-i18n-attr="aria-label:lang_label">
-        <a href="?lang=en" hreflang="en" lang="en" data-lang="en">EN</a>
-        <a href="?lang=fr" hreflang="fr" lang="fr" data-lang="fr">FR</a>
-      </nav>
-      <a class="cta cta-sm js-cta" href="#" aria-disabled="true" data-i18n="cta_short">Try it</a>
-    </div>
-  </header>
 
-  <main id="main">
-    <div class="hero">
-      <div>
-        <p class="eyebrow" data-i18n="eyebrow">Today’s trends · you, your bestie, your dog, your cat</p>
-        <h1 data-i18n="h1">Put <span class="hl">anyone</span> in the trend</h1>
-        <p class="lede" data-i18n="lede"><b>One photo is all it takes.</b> We turn it into the trend everyone’s posting right now, ready in about 2&nbsp;minutes. You, your bestie, your dog, your grandma.</p>
-        <div class="hero-cta">
-          <a class="cta js-cta" id="cta" href="#" aria-disabled="true"><span data-i18n="cta">Put my photo in a trend</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          <p class="note" data-i18n="note">No editing. No dancing skills needed.</p>
-        </div>
-        <ul class="chips">
-          <li data-i18n="chip1">Ready in ~2 min</li>
-          <li data-i18n="chip2">New trends regularly</li>
-          <li data-i18n="chip3">Photos erased after 30 days</li>
-        </ul>
-      </div>
+<header class="wrap top">
+  <a class="brand" href="./">bopsy</a>
+  <nav class="lang" aria-label="Language" data-i18n-attr="aria-label:lang_label">
+    <a href="?lang=fr" data-lang="fr" lang="fr" aria-current="false">FR</a>
+    <a href="?lang=en" data-lang="en" lang="en" aria-current="true">EN</a>
+  </nav>
+</header>
 
-      <div class="stage">
-        <figure class="phone" style="margin:0">
-          <video class="js-video" autoplay muted loop playsinline preload="auto" poster="assets/demo/man-poster.webp" width="432" height="540"
-            aria-label="Demo: the man from the photo dancing" data-i18n-attr="aria-label:hero_video">
-            <source src="assets/demo/man.mp4" type="video/mp4">
-          </video>
-          <span class="tag tag-after" data-i18n="after">AFTER</span>
-          <div class="before">
-            <img src="assets/demo/man-before.webp" width="200" height="250" alt="Before: the photo of the man" data-i18n-attr="alt:hero_before">
-            <span class="tag" data-i18n="before">BEFORE</span>
-          </div>
-          <svg class="arrow" viewBox="0 0 54 34" aria-hidden="true"><path d="M3 28c12-2 26-8 40-21m0 0-11 1m11-1-2 11" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </figure>
-        <span class="sticker s1" aria-hidden="true" data-i18n="sticker1">1 photo ✦</span>
-        <span class="sticker s2" aria-hidden="true" data-i18n="sticker2">= 1 video ready to post</span>
-      </div>
-    </div>
-  </main>
-</div>
-
-<div class="band-clip"><div class="band" aria-hidden="true">
-  <div class="band-track">
-    <span data-i18n="b1">Your bestie</span><span data-i18n="b2">Your dog</span><span data-i18n="b3">Your cat</span><span data-i18n="b4">Grandma</span><span data-i18n="b5">You</span>
-    <span data-i18n="b1">Your bestie</span><span data-i18n="b2">Your dog</span><span data-i18n="b3">Your cat</span><span data-i18n="b4">Grandma</span><span data-i18n="b5">You</span>
+<main id="main">
+  <!-- First screen: real results, local and light (assets/wall, ~230 KB each). -->
+  <div class="wall" aria-label="Videos made with Bopsy" role="group" data-i18n-attr="aria-label:wall_label">
+    <figure class="tile"><img src="assets/wall/groove-jam.webp" alt="" width="360" height="548" fetchpriority="high"><video class="js-v" data-src="assets/wall/groove-jam.mp4" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video></figure>
+    <figure class="tile"><img src="assets/wall/dance-moves.webp" alt="" width="360" height="548" fetchpriority="high"><video class="js-v" data-src="assets/wall/dance-moves.mp4" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video></figure>
+    <figure class="tile"><img src="assets/wall/fresh.webp" alt="" width="360" height="548"><video class="js-v" data-src="assets/wall/fresh.mp4" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video></figure>
+    <figure class="tile"><img src="assets/wall/jubilation.webp" alt="" width="360" height="548"><video class="js-v" data-src="assets/wall/jubilation.mp4" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video></figure>
+    <figure class="tile"><img src="assets/wall/take-the-l.webp" alt="" width="360" height="548" loading="lazy"><video class="js-v" data-src="assets/wall/take-the-l.mp4" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video></figure>
+    <figure class="tile"><img src="assets/wall/wiggle.webp" alt="" width="360" height="548" loading="lazy"><video class="js-v" data-src="assets/wall/wiggle.mp4" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video></figure>
   </div>
-</div></div>
 
-<div class="wrap">
-  <section aria-labelledby="g-title">
-    <h2 id="g-title" data-i18n="g_title">One photo. One trend. Zero effort.</h2>
-    <p class="sub" data-i18n="g_sub">Every one of these started as a single photo.</p>
-    <ul class="gallery">
-      <li class="card">
-        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/dog.mp4" data-poster="assets/demo/dog-poster.webp" width="432" height="540" aria-label="A golden retriever dancing" data-i18n-attr="aria-label:v_dog"></video>
-        <div class="before"><img src="assets/demo/dog-before.webp" loading="lazy" width="200" height="250" alt="Before: the dog sitting on a sofa" data-i18n-attr="alt:v_dog_before"></div>
-        <span class="label" data-i18n="l_dog">The dog</span>
-      </li>
-      <li class="card">
-        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/mamie.mp4" data-poster="assets/demo/mamie-poster.webp" width="432" height="540" aria-label="A grandmother doing the trend on her porch" data-i18n-attr="aria-label:v_mamie"></video>
-        <div class="before"><img src="assets/demo/mamie-before.webp" loading="lazy" width="200" height="250" alt="Before: the photo of the grandmother" data-i18n-attr="alt:v_mamie_before"></div>
-        <span class="label" data-i18n="l_mamie">Grandma</span>
-      </li>
-      <li class="card">
-        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/cat.mp4" data-poster="assets/demo/cat-poster.webp" width="432" height="540" aria-label="A ginger cat dancing on its hind legs" data-i18n-attr="aria-label:v_cat"></video>
-        <span class="label" data-i18n="l_cat">The cat</span>
-      </li>
-      <li class="card">
-        <video class="js-video" muted loop playsinline preload="none" data-src="assets/demo/woman.mp4" data-poster="assets/demo/woman-poster.webp" width="432" height="540" aria-label="A young woman doing the trend at the office" data-i18n-attr="aria-label:v_woman"></video>
-        <span class="label" data-i18n="l_woman">The bestie</span>
-      </li>
-    </ul>
-    <p class="swipe" aria-hidden="true" data-i18n="swipe">Swipe for more →</p>
-  </section>
+  <div class="wrap hero-text">
+    <h1 class="display"><span data-i18n="h1a">Do the trend.</span> <span data-i18n="h1b">Skip the practice.</span></h1>
+    <div>
+      <p class="lede" data-i18n="lede"><b>One photo of you is enough.</b> Bopsy turns it into a short video of the trend of the moment, ready in about 2&nbsp;minutes.</p>
+      <p class="act"><a class="cta js-cta" id="hero-cta" href="#" aria-disabled="true" tabindex="-1" data-i18n="cta">Pick my trend</a></p>
+      <p class="fine" data-i18n="fine">You see the exact price before paying.</p>
+    </div>
+  </div>
 
-  <section aria-labelledby="h-title">
-    <h2 id="h-title" data-i18n="h_title">3 steps, 2 minutes.</h2>
-    <p class="sub" data-i18n="h_sub">No editing, no tutorial, no talent required.</p>
-    <ol class="steps">
-      <li><h3 data-i18n="s1_t">Pick the trend</h3><p data-i18n="s1_p">The ones going around right now. New ones added regularly.</p></li>
-      <li><h3 data-i18n="s2_t">Add one photo</h3><p data-i18n="s2_p">Whole body in the frame: one person, one dog or one cat.</p></li>
-      <li><h3 data-i18n="s3_t">Post your video</h3><p data-i18n="s3_p">Ready in about 2 minutes. Download it, add the trending sound, post.</p></li>
-    </ol>
-  </section>
-
-  <section aria-labelledby="p-title">
-    <div class="price">
-      <div class="split">
-        <div>
-          <p class="offer" data-i18n="offer">LAUNCH OFFER</p>
-          <h2 id="p-title" data-i18n="p_title">One plan, every trend</h2>
-          <p class="sub" data-i18n="p_sub">Weekly or yearly, with a launch offer for new subscribers. Your plan gives you coins each period, and each video uses a few.</p>
-        </div>
-        <div>
-          <ul class="ticks">
-            <li data-i18n="t1">The exact price shows before you pay</li>
-            <li data-i18n="t2">Cancel anytime, your plan runs to the end of the period</li>
-            <li data-i18n="t3">Video failed? Your coins come back automatically</li>
-          </ul>
-          <a class="cta js-cta" href="#" aria-disabled="true"><span data-i18n="cta_price">See the plans</span></a>
-        </div>
-      </div>
+  <section aria-labelledby="how-title">
+    <div class="wrap split">
+      <h2 class="display" id="how-title" data-i18n="how_title">How it works</h2>
+      <ol class="steps">
+        <li data-i18n="s1">Pick a trend from the ones going round right now.</li>
+        <li data-i18n="s2">Add one sharp photo of yourself, head to toe.</li>
+        <li data-i18n="s3">Unlock it: your video is ready in about 2 minutes, to download and post.</li>
+      </ol>
     </div>
   </section>
 
-  <section aria-labelledby="f-title">
-    <div class="split">
-      <div>
-        <h2 id="f-title" data-i18n="f_title">Questions?</h2>
-        <p class="sub" data-i18n="f_sub">Straight answers.</p>
-      </div>
+  <section aria-labelledby="now-title">
+    <div class="wrap">
+      <h2 class="display" id="now-title" data-i18n="now_title">Right now</h2>
+      <p class="sub" data-i18n="now_sub">Every one of these started from a single photo. New trends land regularly.</p>
+    </div>
+    <div class="grid" id="trends"></div>
+  </section>
+
+  <section aria-labelledby="faq-title">
+    <div class="wrap split">
+      <h2 class="display" id="faq-title" data-i18n="faq_title">Questions</h2>
       <div class="faq">
-        <details><summary data-i18n="q1">How long does it take?</summary><p data-i18n="a1">About 2 minutes once you unlock your video. You can close the page: your video waits for you in My videos.</p></details>
-        <details><summary data-i18n="q2">Which photos work best?</summary><p data-i18n="a2">A sharp photo of one adult, one dog or one cat, whole body in the frame. Use a photo of yourself, of an adult who agreed, or of your own pet. Photos of children, nudity or violence are always refused.</p></details>
-        <details><summary data-i18n="q3">What happens to my photo?</summary><p data-i18n="a3">It’s used only to make your video. Photos are erased 30 days after upload, never used for ads, never sold. Delete your photos and videos whenever you want.</p></details>
-        <details><summary data-i18n="q4">Can I cancel anytime?</summary><p data-i18n="a4">Yes, in two taps: My account, then Manage subscription. Your plan stays active until the end of the period you paid for.</p></details>
-        <details><summary data-i18n="q5">What if my video fails?</summary><p data-i18n="a5">Its coins come back to your balance automatically. No ticket, no email to send.</p></details>
+        <details><summary data-i18n="q1">How long does it take?</summary><p data-i18n="a1">About 2 minutes once your video is unlocked. You can close the page: it waits for you in My videos.</p></details>
+        <details><summary data-i18n="q2">How much is it?</summary><p data-i18n="a2">A weekly or yearly plan, with a launch offer for new subscribers. You see the exact price before paying, and you can cancel anytime.</p></details>
+        <details><summary data-i18n="q3">Which photo works best?</summary><p data-i18n="a3">A sharp, well-lit photo of one adult, head to toe. You, or someone who said yes. Photos of children, nudity or violence are always refused.</p></details>
+        <details><summary data-i18n="q4">What happens to my photo?</summary><p data-i18n="a4">It’s only used to make your video. Photos are erased 30 days after upload, never used for ads, never sold. You can delete your photos and videos whenever you want.</p></details>
+        <details><summary data-i18n="q5">Can I cancel?</summary><p data-i18n="a5">Yes, anytime, from My account. Your plan stays on until the end of the period you paid for.</p></details>
       </div>
     </div>
   </section>
 
-  <section class="final" aria-labelledby="c-title">
-    <h2 id="c-title" data-i18n="c_title">The next trend is you.</h2>
-    <p class="sub" data-i18n="c_sub">All it takes is one photo.</p>
-    <a class="cta js-cta" href="#" aria-disabled="true"><span data-i18n="cta">Put my photo in a trend</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-    <p><span class="trust"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span data-i18n="trust">Your photos are erased after 30 days and never used for ads.</span></span></p>
+  <section class="end" aria-labelledby="end-title">
+    <div class="wrap">
+      <h2 class="display" id="end-title" data-i18n="end_title">You’re next.</h2>
+      <p class="act"><a class="cta js-cta" id="end-cta" href="#" aria-disabled="true" tabindex="-1" data-i18n="cta">Pick my trend</a></p>
+    </div>
   </section>
+</main>
 
-  <footer>
+<footer>
+  <div class="wrap">
     <nav aria-label="Legal" data-i18n-attr="aria-label:legal_label">
       <a class="js-legal" href="privacy/" data-path="privacy/" data-i18n="ft_privacy">Privacy</a>
       <a class="js-legal" href="terms/" data-path="terms/" data-i18n="ft_terms">Terms</a>
@@ -358,49 +239,51 @@ footer nav a:hover { color: var(--text); }
       <a class="js-legal" href="legal/" data-path="legal/" data-i18n="ft_legal">Legal notice</a>
     </nav>
     <span>© 2026 <span class="todo">[COMPANY LEGAL NAME]</span></span>
-  </footer>
-</div>
+  </div>
+</footer>
 
 <div class="dock" id="dock">
-  <a class="cta js-cta" href="#" aria-disabled="true" tabindex="-1"><span data-i18n="cta">Put my photo in a trend</span></a>
+  <a class="cta js-cta" href="#" aria-disabled="true" tabindex="-1" data-i18n="cta">Pick my trend</a>
 </div>
 
 <script>
 (function () {
+  // The trends below the fold: public demos of the catalogue (people only), loaded as they come near.
+  var BASE = 'https://epwxusmvjeyeljyqzzda.supabase.co/storage/v1/object/public/posters/';
+  var TRENDS = [
+    ['floss', 'Floss'], ['office-shuffle', 'Office Shuffle'], ['the-robot', 'The Robot'], ['hype', 'Hype'],
+    ['flapper', 'Flapper'], ['disco-fever', 'Disco Fever'], ['squat-kick', 'Squat Kick'], ['kitchen-two-step', 'Kitchen Two-Step'],
+    ['electro-shuffle', 'Electro Shuffle'], ['reanimated', 'Reanimated'], ['hoodie-wave', 'Hoodie Wave'], ['ride-the-pony', 'Ride the Pony']
+  ];
+  var grid = document.getElementById('trends');
+  grid.innerHTML = TRENDS.map(function (t) {
+    return '<figure class="tile"><img class="js-p" data-src="' + BASE + t[0] + '.jpg" alt="" width="540" height="822" decoding="async">' +
+      '<video class="js-v" data-src="' + BASE + t[0] + '-demo.mp4" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video>' +
+      '<figcaption>' + t[1] + '</figcaption></figure>';
+  }).join('');
+
   // French copy. English is the HTML itself (captured below so the switch can go back).
   var FR = {
-    title: 'Bopsy · Mets n’importe qui dans la trend du moment',
-    desc: 'Transforme une photo en vidéo de la trend du moment. Humains, chiens et chats. Prête en 2 minutes environ.',
-    skip: 'Aller au contenu', lang_label: 'Langue', legal_label: 'Informations légales',
-    cta_short: 'Essayer', cta: 'Mets ta photo dans la trend', cta_soon: 'Bientôt dispo', cta_price: 'Voir les formules',
-    eyebrow: 'Les trends du moment · toi, ta pote, ton chien, ton chat',
-    h1: 'Mets <span class="hl">n’importe qui</span> dans la trend',
-    lede: '<b>Une photo suffit.</b> On la transforme en vidéo de la trend du moment, prête en 2&nbsp;minutes environ. Toi, ta pote, ton chien, ta mamie.',
-    note: 'Pas de montage. Pas besoin de savoir danser.',
-    chip1: 'Prête en ~2 min', chip2: 'Nouvelles trends régulièrement', chip3: 'Photos effacées sous 30 jours',
-    hero_video: 'Démo : l’homme de la photo en train de danser', hero_before: 'Avant : la photo de l’homme',
-    after: 'APRÈS', before: 'AVANT', sticker1: '1 photo ✦', sticker2: '= 1 vidéo prête à poster',
-    b1: 'Ta pote', b2: 'Ton chien', b3: 'Ton chat', b4: 'Mamie', b5: 'Toi',
-    g_title: 'Une photo. Une trend. Zéro effort.', g_sub: 'Chacune de ces vidéos est partie d’une seule photo.',
-    v_dog: 'Un golden retriever qui danse', v_dog_before: 'Avant : le chien assis sur un canapé',
-    v_mamie: 'Une mamie qui fait la trend sur son perron', v_mamie_before: 'Avant : la photo de la mamie',
-    v_cat: 'Un chat roux qui danse sur ses pattes arrière', v_woman: 'Une jeune femme qui fait la trend au bureau',
-    l_dog: 'Le chien', l_mamie: 'Mamie', l_cat: 'Le chat', l_woman: 'La bestie', swipe: 'Swipe pour voir la suite →',
-    h_title: '3 étapes, 2 minutes.', h_sub: 'Pas de montage, pas de tuto, pas de talent requis.',
-    s1_t: 'Choisis la trend', s1_p: 'Celles qui tournent en ce moment. De nouvelles arrivent régulièrement.',
-    s2_t: 'Ajoute une photo', s2_p: 'En pied, bien nette : une personne, un chien ou un chat.',
-    s3_t: 'Poste ta vidéo', s3_p: 'Prête en 2 minutes environ. Télécharge-la, ajoute le son du moment, poste.',
-    offer: 'OFFRE DE LANCEMENT', p_title: 'Un abonnement, toutes les trends',
-    p_sub: 'À la semaine ou à l’année, avec une offre de lancement pour les nouveaux abonnés. Ta formule te donne des pièces à chaque période, chaque vidéo en utilise quelques-unes.',
-    t1: 'Le prix exact s’affiche avant de payer', t2: 'Résiliable à tout moment, ta formule court jusqu’à la fin de la période', t3: 'Vidéo ratée ? Tes pièces reviennent toutes seules',
-    f_title: 'Des questions ?', f_sub: 'Les réponses, sans blabla.',
-    q1: 'Ça prend combien de temps ?', a1: 'Environ 2 minutes une fois ta vidéo débloquée. Tu peux fermer la page : ta vidéo t’attend dans Mes vidéos.',
-    q2: 'Quelles photos marchent le mieux ?', a2: 'Une photo nette d’un seul adulte, d’un chien ou d’un chat, en pied. Une photo de toi, d’un adulte qui est d’accord, ou de ton propre animal. Les photos d’enfants, de nudité ou de violence sont toujours refusées.',
-    q3: 'Vous faites quoi de ma photo ?', a3: 'Elle sert uniquement à faire ta vidéo. Les photos sont effacées 30 jours après l’envoi, jamais utilisées pour de la pub, jamais vendues. Tu supprimes tes photos et vidéos quand tu veux.',
-    q4: 'Je peux résilier quand je veux ?', a4: 'Oui, en deux clics : Mon compte, puis Gérer l’abonnement. Ta formule reste active jusqu’à la fin de la période payée.',
-    q5: 'Et si ma vidéo rate ?', a5: 'Ses pièces reviennent sur ton solde automatiquement. Pas de ticket, pas de mail à envoyer.',
-    c_title: 'La prochaine trend, c’est toi.', c_sub: 'Il suffit d’une photo.',
-    trust: 'Tes photos sont effacées au bout de 30 jours et jamais utilisées pour de la pub.',
+    title: 'Bopsy · Toi, dans les trends du moment',
+    desc: 'Une photo de toi devient une courte vidéo de la trend du moment. Prête en 2 minutes environ une fois débloquée.',
+    skip: 'Aller au contenu', lang_label: 'Langue', legal_label: 'Informations légales', wall_label: 'Vidéos faites avec Bopsy',
+    h1a: 'Fais la trend.', h1b: 'Sans répéter.',
+    lede: '<b>Une photo de toi suffit.</b> Bopsy en fait une courte vidéo de la trend du moment, prête en 2&nbsp;minutes environ.',
+    cta: 'Choisir ma trend', cta_soon: 'Bientôt dispo',
+    fine: 'Le prix exact s’affiche avant de payer.',
+    how_title: 'Comment ça marche',
+    s1: 'Choisis une trend parmi celles qui tournent en ce moment.',
+    s2: 'Ajoute une photo de toi, nette, en pied.',
+    s3: 'Débloque-la : ta vidéo est prête en 2 minutes environ, à télécharger et poster.',
+    now_title: 'En ce moment',
+    now_sub: 'Chacune est partie d’une seule photo. De nouvelles trends arrivent régulièrement.',
+    faq_title: 'Questions',
+    q1: 'Ça prend combien de temps ?', a1: 'Environ 2 minutes une fois ta vidéo débloquée. Tu peux fermer la page : elle t’attend dans Mes vidéos.',
+    q2: 'Combien ça coûte ?', a2: 'Un abonnement à la semaine ou à l’année, avec une offre de lancement pour les nouveaux abonnés. Le prix exact s’affiche avant de payer, et tu résilies quand tu veux.',
+    q3: 'Quelle photo marche le mieux ?', a3: 'Une photo nette et bien éclairée d’un seul adulte, en pied. Toi, ou quelqu’un qui est d’accord. Les photos d’enfants, de nudité ou de violence sont toujours refusées.',
+    q4: 'Que devient ma photo ?', a4: 'Elle sert uniquement à faire ta vidéo. Les photos sont effacées 30 jours après l’envoi, jamais utilisées pour de la pub, jamais vendues. Tu supprimes tes photos et vidéos quand tu veux.',
+    q5: 'Je peux résilier ?', a5: 'Oui, quand tu veux, depuis Mon compte. Ta formule reste active jusqu’à la fin de la période payée.',
+    end_title: 'À toi.',
     ft_privacy: 'Confidentialité', ft_terms: 'Conditions d’utilisation', ft_support: 'Aide', ft_delete: 'Supprimer mes données', ft_legal: 'Mentions légales'
   };
   var EN = { title: document.title, desc: '', cta_soon: 'Coming soon' };
@@ -439,7 +322,7 @@ footer nav a:hover { color: var(--text); }
       var target = new URL(appUrl, location.href);
       new URLSearchParams(location.search).forEach(function (v, k) { target.searchParams.set(k, v); });
       target.searchParams.set('lang', lang);
-      ctas.forEach(function (a) { a.href = target.toString(); a.removeAttribute('aria-disabled'); });
+      ctas.forEach(function (a) { a.href = target.toString(); a.removeAttribute('aria-disabled'); a.removeAttribute('tabindex'); });
     }
   }
 
@@ -455,39 +338,60 @@ footer nav a:hover { color: var(--text); }
     });
   });
 
-  // Videos: muted loops that play only on screen; below-the-fold ones load when they come near.
-  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var videos = document.querySelectorAll('.js-video');
-  function load(v) {
-    if (v.dataset.poster) { v.poster = v.dataset.poster; v.removeAttribute('data-poster'); }
-    if (v.dataset.src) { v.src = v.dataset.src; v.removeAttribute('data-src'); }
-  }
-  if (reduce) {
-    videos.forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
-  }
-  if ('IntersectionObserver' in window) {
-    var near = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (e.isIntersecting) { load(e.target); near.unobserve(e.target); } });
-    }, { rootMargin: '300px 300px' });
-    var seen = new IntersectionObserver(function (es) {
-      es.forEach(function (e) {
-        var v = e.target;
-        if (e.isIntersecting) { load(v); if (!reduce) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } }
-        else v.pause();
-      });
-    }, { threshold: 0.25 });
-    videos.forEach(function (v) { near.observe(v); seen.observe(v); });
+  // Posters of the trends: fetched only when they come near (lazy images start too early on 4G).
+  var posters = document.querySelectorAll('.js-p');
+  function poster(img) { if (img.dataset.src) { img.src = img.dataset.src; img.removeAttribute('data-src'); } }
+  if (!('IntersectionObserver' in window)) { posters.forEach(poster); return; }
+  var nearIo = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { poster(e.target); nearIo.unobserve(e.target); } });
+  }, { rootMargin: '300px 0px' });
+  posters.forEach(function (img) { nearIo.observe(img); });
 
-    // Sticky button on phones once the hero button has scrolled away (hidden again near the final one).
-    var dock = document.getElementById('dock');
-    var dockLink = dock.querySelector('a');
-    var heroOut = false, finalIn = false;
-    var sync = function () { var on = heroOut && !finalIn; dock.classList.toggle('on', on); dockLink.tabIndex = on ? 0 : -1; };
-    new IntersectionObserver(function (es) { heroOut = !es[0].isIntersecting && es[0].boundingClientRect.top < 0; sync(); }).observe(document.getElementById('cta'));
-    new IntersectionObserver(function (es) { finalIn = es[0].isIntersecting; sync(); }).observe(document.querySelector('.final .cta'));
-  } else {
-    videos.forEach(load);
+  // Phone: the bottom button shows once the hero button has left the screen, and hides at the last one.
+  var dock = document.getElementById('dock');
+  var seen = { hero: true, end: false };
+  var dockIo = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { seen[e.target.id === 'hero-cta' ? 'hero' : 'end'] = e.isIntersecting; });
+    dock.classList.toggle('show', !seen.hero && !seen.end && document.getElementById('hero-cta').getBoundingClientRect().top < 0);
+  });
+  dockIo.observe(document.getElementById('hero-cta'));
+  dockIo.observe(document.getElementById('end-cta'));
+
+  // Videos: muted loops, never sound. A clip gets its src and plays only while it is at least half on
+  // screen, and is released when it leaves; 4 at once on a phone, 8 on a computer. Posters only with
+  // reduced motion or Save-Data. Same rules as the catalogue of the app (app/src/ui/card-motion.ts).
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var saveData = navigator.connection && navigator.connection.saveData === true;
+  if (reduce || saveData) return;
+  var cap = matchMedia('(min-width: 900px)').matches ? 8 : 4;
+  var playing = [], waiting = [];
+  function start(v) {
+    v.muted = true;
+    if (v.getAttribute('src') !== v.dataset.src) v.setAttribute('src', v.dataset.src);
+    try { var p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (err) {}
   }
+  function stop(v) { v.pause(); v.classList.remove('on'); v.removeAttribute('src'); v.load(); }
+  function show(v) {
+    if (playing.indexOf(v) >= 0 || waiting.indexOf(v) >= 0) return;
+    if (playing.length < cap) { playing.push(v); start(v); } else waiting.push(v);
+  }
+  function hide(v) {
+    var i = waiting.indexOf(v);
+    if (i >= 0) waiting.splice(i, 1);
+    i = playing.indexOf(v);
+    if (i < 0) return;
+    playing.splice(i, 1);
+    stop(v);
+    var next = waiting.shift();
+    if (next) { playing.push(next); start(next); }
+  }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting && e.intersectionRatio >= 0.5) show(e.target); else hide(e.target); });
+  }, { threshold: [0, 0.5] });
+  document.querySelectorAll('.js-v').forEach(function (v) {
+    v.addEventListener('playing', function () { v.classList.add('on'); });
+    io.observe(v);
+  });
 })();
 </script>
 </body>

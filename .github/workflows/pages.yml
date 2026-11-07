@@ -64,6 +64,7 @@ jobs:
           # To check once the file exists: upload-pages-artifact may leave hidden folders out.
           if [ -d .well-known ]; then cp -r .well-known _site/; fi
           # fr/: the French legal pages (fr/privacy, fr/terms, fr/support, fr/delete-data, fr/legal).
+          # assets/: fonts, icons, og.jpg and wall/ (the muted clips and posters of the landing's first screen).
           cp -r assets privacy terms support delete-data legal fr _site/
           cp -r app/dist _site/app
 
