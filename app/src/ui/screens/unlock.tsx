@@ -7,7 +7,7 @@ import { navigate } from '../../core/router';
 import * as otp from '../../core/otp';
 import { app } from '../app-state';
 import { Checkbox, Header } from '../components';
-import { useNow } from '../hooks';
+import { useNow, useStore } from '../hooks';
 
 function errorText(error: otp.OtpError): string {
   switch (error) {
@@ -31,6 +31,14 @@ export function UnlockScreen() {
   const [news, setNews] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+  const session = useStore(app().session);
+  const flowState = app().flow.state;
+  // Opened from "Sign in" (no video waiting for its email): the words of a plain sign-in.
+  const forVideo = flowState.photo.kind === 'accepted' && Boolean(flowState.danceSlug);
+
+  useEffect(() => {
+    if (!forVideo && session && !session.guest) navigate('/account', { replace: true });
+  }, [forVideo, session?.userId, session?.guest]);
 
   useEffect(() => {
     (state.step === 'code' ? codeRef : emailRef).current?.focus();
@@ -79,8 +87,8 @@ export function UnlockScreen() {
       <main class="narrow">
         {state.step === 'email' ? (
           <form onSubmit={(event) => void send(event)} noValidate>
-            <h1 class="title">{t.signInTitle}</h1>
-            <p class="lede">{t.signInBody}</p>
+            <h1 class="title">{forVideo ? t.signInTitle : t.loginTitle}</h1>
+            <p class="lede">{forVideo ? t.signInBody : t.loginBody}</p>
             <div class="field">
               <label for="email">{t.emailLabel}</label>
               <input
@@ -98,9 +106,9 @@ export function UnlockScreen() {
               />
             </div>
             {state.error && <p id="otp-error" class="error-text" role="alert">{errorText(state.error)}</p>}
-            <Checkbox id="newsletter" checked={news} onChange={setNews}>
+            {forVideo && <Checkbox id="newsletter" checked={news} onChange={setNews}>
               {t.newsletter}
-            </Checkbox>
+            </Checkbox>}
             <div class="cta-bar">
               <button type="submit" class="btn btn-cta btn-block" disabled={state.busy} aria-busy={state.busy}>
                 {state.busy ? '…' : t.sendCode}

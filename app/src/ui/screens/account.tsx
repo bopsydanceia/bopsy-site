@@ -62,7 +62,7 @@ export function AccountScreen() {
         {!signedIn ? (
           <div class="empty">
             <p class="muted">{t.signInBody}</p>
-            <a class="btn btn-cta" href="#/unlock">{t.signIn}</a>
+            <a class="btn btn-cta" href="#/login">{t.signIn}</a>
           </div>
         ) : (
           <>

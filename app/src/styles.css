@@ -50,6 +50,7 @@ main { flex: 1; display: flex; flex-direction: column; padding: 0 var(--gutter-r
 .icon-btn svg { width: 24px; height: 24px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 18px; background: var(--surface-2); color: var(--coin); font-weight: 700; font-size: 15px; text-decoration: none; }
 .pill svg { width: 18px; height: 18px; }
+.login-pill { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px solid var(--text-soft); color: var(--text); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; }
 a.pill { position: relative; }
 a.pill::after { content: ''; position: absolute; inset: -4px 0; } /* 44 px target */
 .demo-badge { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--on-coin); background: var(--coin); border-radius: 999px; padding: 4px 9px; }

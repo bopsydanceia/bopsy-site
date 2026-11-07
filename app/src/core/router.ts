@@ -40,6 +40,8 @@ export function parseHash(hash: string): Route {
       return valid ? { name: 'generating', id } : { name: 'dances' };
     case 'video':
       return valid ? { name: 'video', id } : { name: 'dances' };
+    case 'login':
+      return parts.length === 1 ? { name: 'unlock' } : { name: 'dances' };
     case 'ready':
     case 'unlock':
     case 'paywall':

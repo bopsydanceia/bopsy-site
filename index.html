@@ -61,6 +61,9 @@ h1, h2, h3, p, ol, dl { margin: 0; }
 /* Header */
 .top { display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding-top: env(safe-area-inset-top); }
 .brand { font: 800 28px/1 var(--display); letter-spacing: -0.05em; text-decoration: none; padding: 8px 0; }
+.top-right { display: flex; align-items: center; gap: 8px; }
+.login { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border: 2px solid var(--ink); border-radius: 999px; color: var(--ink); font-size: 14px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.login:hover { background: var(--ink); color: var(--bg, #fff); }
 .lang { display: flex; gap: 4px; font-size: 14px; font-weight: 700; letter-spacing: 0.04em; }
 .lang a { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; justify-content: center; color: var(--muted); text-decoration: none; }
 .lang a[aria-current="true"] { color: var(--ink); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
@@ -163,10 +166,13 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
 
 <header class="wrap top">
   <a class="brand" href="./">bopsy</a>
+  <div class="top-right">
+  <a class="login" id="login" href="#" hidden data-i18n="login">Sign in</a>
   <nav class="lang" aria-label="Language" data-i18n-attr="aria-label:lang_label">
     <a href="?lang=fr" data-lang="fr" lang="fr" aria-current="false">FR</a>
     <a href="?lang=en" data-lang="en" lang="en" aria-current="true">EN</a>
   </nav>
+  </div>
 </header>
 
 <main id="main">
@@ -269,7 +275,7 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
     skip: 'Aller au contenu', lang_label: 'Langue', legal_label: 'Informations légales', wall_label: 'Vidéos faites avec Bopsy',
     h1a: 'Fais la trend.', h1b: 'Sans répéter.',
     lede: '<b>Une photo de toi suffit.</b> Bopsy en fait une courte vidéo de la trend du moment, prête en 2&nbsp;minutes environ.',
-    cta: 'Choisir ma trend', cta_soon: 'Bientôt dispo',
+    cta: 'Choisir ma trend', cta_soon: 'Bientôt dispo', login: 'Se connecter', account: 'Mon compte',
     fine: 'Le prix exact s’affiche avant de payer.',
     how_title: 'Comment ça marche',
     s1: 'Choisis une trend parmi celles qui tournent en ce moment.',
@@ -286,7 +292,7 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
     end_title: 'À toi.',
     ft_privacy: 'Confidentialité', ft_terms: 'Conditions d’utilisation', ft_support: 'Aide', ft_delete: 'Supprimer mes données', ft_legal: 'Mentions légales'
   };
-  var EN = { title: document.title, desc: '', cta_soon: 'Coming soon' };
+  var EN = { title: document.title, desc: '', cta_soon: 'Coming soon', account: 'My account' };
   var metaDesc = document.querySelector('meta[name="description"]');
   EN.desc = metaDesc.content;
   var texts = document.querySelectorAll('[data-i18n]');
@@ -300,6 +306,13 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
 
   var appUrl = (document.querySelector('meta[name="bopsy-app-url"]') || {}).content || '';
   var ctas = document.querySelectorAll('.js-cta');
+  var login = document.getElementById('login');
+  // Signed in already (the app keeps the Supabase session in this site's storage, same origin): "My account".
+  var signedIn = false;
+  try {
+    var stored = JSON.parse(localStorage.getItem('bopsy.auth') || 'null');
+    signedIn = !!(stored && stored.user && !stored.user.is_anonymous && stored.refresh_token);
+  } catch (err) {}
 
   function apply(lang) {
     var d = lang === 'fr' ? FR : EN;
@@ -310,6 +323,7 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
     texts.forEach(function (el) {
       var k = el.getAttribute('data-i18n');
       if (k === 'cta' && !appUrl) k = 'cta_soon';
+      if (k === 'login' && signedIn) k = 'account';
       el.innerHTML = t(k);
     });
     attrs.forEach(function (el) {
@@ -323,6 +337,9 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
       new URLSearchParams(location.search).forEach(function (v, k) { target.searchParams.set(k, v); });
       target.searchParams.set('lang', lang);
       ctas.forEach(function (a) { a.href = target.toString(); a.removeAttribute('aria-disabled'); a.removeAttribute('tabindex'); });
+      target.hash = signedIn ? '#/account' : '#/login';
+      login.href = target.toString();
+      login.hidden = false;
     }
   }
 

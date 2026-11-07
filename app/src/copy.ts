@@ -170,6 +170,8 @@ const en = {
   emailLabel: 'Email', // NEW
   sendCode: 'Send code', // NEW
   codeTitle: 'Enter your code', // NEW
+  loginTitle: 'Sign in',
+  loginBody: "Enter the email you used. We'll send you a code to find your videos and coins.",
   codeBody: (email: string) => `We sent a code to ${email}. You can also tap the link in the email.`, // NEW
   codeLabel: 'Code from the email', // NEW
   verify: 'Verify', // NEW
@@ -250,7 +252,7 @@ const en = {
   coinsLeft: (balance: number) => `${formatNumber(balance)} left`, // resultCoinsLeft
   download: 'Download', // NEW (resultSave on the web)
   share: 'Share', // resultShare
-  hint: 'Post it, then add the trending sound in the app.', // resultHint
+  hint: 'It already has the sound of the trend. Download it and post it.', // resultHint
   makeAnother: 'Make another', // resultMakeAnother
   linkCopied: 'Link copied. It works for 7 days.', // NEW
   shareFailed: "We couldn't share your video. Try Download.", // NEW
@@ -461,6 +463,8 @@ const fr: Copy = {
   emailLabel: 'E-mail',
   sendCode: 'Recevoir le code',
   codeTitle: 'Entre ton code',
+  loginTitle: 'Se connecter',
+  loginBody: 'Entre l’e-mail que tu as utilisé. On t’envoie un code pour retrouver tes vidéos et tes pièces.',
   codeBody: (email: string) => `On a envoyé un code à ${email}. Tu peux aussi toucher le lien dans l’e-mail.`,
   codeLabel: 'Code reçu par e-mail',
   verify: 'Valider',
@@ -542,7 +546,7 @@ const fr: Copy = {
   coinsLeft: (balance: number) => `${formatNumber(balance)} ${balance <= 1 ? 'restante' : 'restantes'}`,
   download: 'Télécharger',
   share: 'Partager',
-  hint: 'Poste-la, puis ajoute le son tendance dans l’app.',
+  hint: 'Elle a déjà le son de la trend. Télécharge-la et poste-la.',
   makeAnother: 'En faire une autre',
   linkCopied: 'Lien copié. Il marche pendant 7 jours.',
   shareFailed: 'Impossible de partager ta vidéo. Essaie Télécharger.',

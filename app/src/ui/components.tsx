@@ -48,12 +48,18 @@ export function LangSwitch() {
 /** The header links of a computer screen (hidden on phones, where the screens link to each other). */
 function DeskNav() {
   const route = useStore(routeStore);
+  const session = useStore(app().session);
+  const signedIn = session !== null && !session.guest;
   const current = (name: string) => (route.name === name ? 'page' : undefined);
   return (
     <nav class="desk-nav">
       <a href="#/" aria-current={current('dances')}>{t.navDances}</a>
       <a href="#/videos" aria-current={current('videos')}>{t.myVideos}</a>
-      <a href="#/account" aria-current={current('account')}>{t.account}</a>
+      {signedIn ? (
+        <a href="#/account" aria-current={current('account')}>{t.account}</a>
+      ) : (
+        <a href="#/login" class="nav-login" aria-current={current('unlock')}>{t.signIn}</a>
+      )}
       <LangSwitch />
     </nav>
   );
@@ -70,6 +76,7 @@ interface HeaderProps {
 
 export function Header({ title, back, close, brand, right }: HeaderProps) {
   const session = useStore(app().session);
+  const onSignIn = useStore(routeStore).name === 'unlock';
   return (
     <header class="top">
       <div class="top-left">
@@ -95,10 +102,8 @@ export function Header({ title, back, close, brand, right }: HeaderProps) {
         {right ?? (
           <>
             <CoinPill />
-            {(!session || session.guest) && brand && (
-              <a class="icon-btn mobile-only" href="#/account" aria-label={t.account}>
-                <Icon name="user" />
-              </a>
+            {(!session || session.guest) && !onSignIn && (
+              <a class="login-pill mobile-only" href="#/login">{t.signIn}</a>
             )}
           </>
         )}
