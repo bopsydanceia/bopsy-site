@@ -47,6 +47,36 @@ export async function encodeUnderLimit(
   return null;
 }
 
+/** HEIC/HEIF brands of the ISO BMFF "ftyp" box (bytes 8 to 12). */
+const HEIC_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'];
+
+/** True when the name or type says HEIC/HEIF (cheap, before reading the file). */
+export function namedHeic(type: string, name: string): boolean {
+  return /^image\/hei[cf]/i.test(type) || /\.(heic|heif)$/i.test(name);
+}
+
+/** True for a HEIC/HEIF file, by its type, its name or its first bytes (Android often sends no type). */
+export async function looksHeic(file: Blob, name = ''): Promise<boolean> {
+  if (namedHeic(file.type, name)) return true;
+  try {
+    const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const text = String.fromCharCode(...head);
+    return text.slice(4, 8) === 'ftyp' && HEIC_BRANDS.includes(text.slice(8, 12).toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A HEIC photo as JPEG, decoded in the page (libheif, loaded only for such
+ * a file): Chrome and Firefox cannot show or redraw HEIC, and the moderation
+ * and video providers do not take it. Throws when the file cannot be decoded.
+ */
+export async function heicToJpeg(file: Blob): Promise<Blob> {
+  const { heicTo } = await import('heic-to');
+  return heicTo({ blob: file, type: 'image/jpeg', quality: 0.92 });
+}
+
 export async function prepareUpload(file: Blob): Promise<Blob> {
   if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;
   try {

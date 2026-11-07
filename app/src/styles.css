@@ -349,3 +349,15 @@ textarea { width: 100%; min-height: 84px; padding: 12px; border-radius: 14px; bo
   .trend-stage { flex: 0 0 auto; width: min(420px, 40vw); aspect-ratio: 9 / 16; border-radius: 24px; }
   .trend-cta { max-width: 360px; background: none; padding: 0; }
 }
+
+/* Photo examples (create.tsx): same person, does not work / works. */
+.examples { margin-top: 18px; }
+.examples h3 { margin: 0 0 10px; font-size: 17px; }
+.ex-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.ex { margin: 0; border-radius: 16px; overflow: hidden; background: var(--surface); }
+.ex img { display: block; width: 100%; aspect-ratio: 2 / 3; height: auto; object-fit: cover; }
+.ex.ko img { filter: saturate(0.7); }
+.ex figcaption { display: flex; gap: 6px; align-items: center; padding: 8px 10px; font-size: 14px; font-weight: 600; }
+.ex figcaption svg { width: 16px; height: 16px; flex: none; }
+.ex.ok { outline: 2px solid color-mix(in srgb, var(--ok, #3ddc84) 70%, transparent); }
+@media (min-width: 900px) { .ex-row { gap: 14px; } }

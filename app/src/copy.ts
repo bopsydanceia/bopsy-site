@@ -92,6 +92,13 @@ const en = {
   camera: 'Camera', // createCamera
   gallery: 'Gallery', // createGallery
   tipsTitle: 'Photo tips', // photoTipsTitle
+  exTitle: 'Like this, not like that', // NEW (photo examples)
+  exSittingKo: 'Sitting, body hidden', // NEW
+  exStandingOk: 'Standing, head to feet', // NEW
+  exSelfieKo: 'Face only', // NEW
+  exBodyOk: 'Whole body, some space around', // NEW
+  exGroupKo: 'Several people', // NEW
+  exAloneOk: 'Alone in the photo', // NEW
   tipWholeBody: 'Whole body in the frame', // photoTipsRuleWholeBody
   tipOneSubject: 'One adult, alone in the photo', // NEW (photoTipsRuleOneSubject aligned on C8)
   tipSharp: 'Sharp photo, good light', // photoTipsRuleSharp
@@ -376,6 +383,13 @@ const fr: Copy = {
   camera: 'Appareil photo',
   gallery: 'Galerie',
   tipsTitle: 'Conseils photo',
+  exTitle: 'Comme ça, pas comme ça',
+  exSittingKo: 'Assise, corps caché',
+  exStandingOk: 'Debout, de la tête aux pieds',
+  exSelfieKo: 'Visage seul',
+  exBodyOk: 'Corps entier, un peu d’espace autour',
+  exGroupKo: 'Plusieurs personnes',
+  exAloneOk: 'Seule sur la photo',
   tipWholeBody: 'Le corps entier dans le cadre',
   tipOneSubject: 'Un adulte, seul sur la photo',
   tipSharp: 'Photo nette, bonne lumière',

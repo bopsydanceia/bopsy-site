@@ -389,3 +389,41 @@ describe('D139: nothing generated before payment, paywall before the email', () 
     expect(backend.state.users[backend.auth.current()!.userId]!.newsletter).toBe(true);
   });
 });
+
+describe('HEIC photos (Samsung and most Android cameras)', () => {
+  const heicBytes = () => new Blob([new Uint8Array([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0, 0, 0, 0])], { type: '' });
+
+  test('detected by its first bytes, converted to JPEG before the upload, then sent as JPEG', async () => {
+    const jpeg = new Blob(['jpeg'], { type: 'image/jpeg' });
+    const converter = vi.fn(async () => jpeg);
+    flow.heicConverter = converter;
+    flow.selectDance('street-bounce');
+    flow.pickPhoto(heicBytes(), 'IMG_2026.heic');
+    expect(flow.state.photo).toMatchObject({ kind: 'local', url: null }); // no broken preview meanwhile
+    const spy = vi.spyOn(backend, 'checkPhoto');
+    await flow.setConsent(true);
+    expect(converter).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledOnce();
+    expect((spy.mock.calls[0]![1] as string)).toBe('IMG_2026.jpg');
+    expect(flow.state.photo.kind).toBe('accepted');
+  });
+
+  test('a HEIC that cannot be decoded: the photo-type message, nothing sent', async () => {
+    flow.heicConverter = vi.fn(async () => {
+      throw new Error('libheif');
+    });
+    flow.selectDance('street-bounce');
+    flow.pickPhoto(heicBytes(), 'photo.heic');
+    const spy = vi.spyOn(backend, 'checkPhoto');
+    await flow.setConsent(true);
+    expect(flow.state.notice).toBe('photo_type');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('a JPEG is never sent to the converter', async () => {
+    const converter = vi.fn(async (b: Blob) => b);
+    flow.heicConverter = converter;
+    await checkedPhoto();
+    expect(converter).not.toHaveBeenCalled();
+  });
+});

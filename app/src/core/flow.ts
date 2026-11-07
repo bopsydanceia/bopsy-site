@@ -17,7 +17,7 @@ import {
   type FlowState,
   type Notice,
 } from './flow-state';
-import { prepareUpload } from './image';
+import { heicToJpeg, looksHeic, namedHeic, prepareUpload } from './image';
 import type { RateLimited } from './limits';
 import type { Backend } from './ports';
 import type { Navigate } from './router';
@@ -76,6 +76,12 @@ export const PREVIEW_OFF_PAUSE_MS = 10 * 60_000;
 export class Flow {
   readonly store: Store<FlowState>;
   private uploadToken = 0;
+  /** One per picked photo: a late HEIC conversion of an older photo is ignored. */
+  private pickToken = 0;
+  /** The HEIC to JPEG conversion of the picked photo; the upload waits for it. */
+  private converting: Promise<void> | null = null;
+  /** Injected in tests. */
+  heicConverter: (file: Blob) => Promise<Blob> = heicToJpeg;
   /** The picked file as sent (2048 px JPEG), made once per photo. */
   private prepared: { file: Blob; blob: Blob } | null = null;
   /** The file already in the bucket after a failed check: check-photo is asked again without a new upload. */
@@ -109,11 +115,38 @@ export class Flow {
   pickPhoto(file: Blob, name: string): void {
     const previous = this.state.photo;
     if (previous.kind !== 'none' && previous.url?.startsWith('blob:')) URL.revokeObjectURL(previous.url);
-    const url = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null;
+    // A HEIC has no preview until it is converted (the browser would show a broken image).
+    const heic = namedHeic(file.type, name);
+    const url = !heic && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null;
     this.uploadToken++;
+    const pick = ++this.pickToken;
     this.prepared = null;
     this.uploaded = null;
     this.set((state) => choosePhoto(state, { file, name, url }));
+    this.converting = this.convertHeic(file, name, pick).finally(() => {
+      if (pick === this.pickToken) this.converting = null;
+    });
+  }
+
+  /** HEIC (most Android cameras): converted to JPEG in the page, then shown and sent like any photo. */
+  private async convertHeic(file: Blob, name: string, pick: number): Promise<void> {
+    if (!(await looksHeic(file, name))) return;
+    let jpeg: Blob;
+    try {
+      jpeg = await this.heicConverter(file);
+    } catch {
+      if (pick === this.pickToken) this.notice('photo_type');
+      return;
+    }
+    if (pick !== this.pickToken) return;
+    const url = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(jpeg) : null;
+    const jpegName = name.replace(/\.(heic|heif)$/i, '') + '.jpg';
+    this.set((state) => {
+      const photo = state.photo;
+      if (photo.kind !== 'local' || photo.file !== file) return state;
+      if (photo.url?.startsWith('blob:')) URL.revokeObjectURL(photo.url);
+      return { ...state, photo: { ...photo, file: jpeg, name: jpegName, url } };
+    });
   }
 
   /** The consent box. Ticking it sends a photo not sent yet (D50). */
@@ -128,6 +161,8 @@ export class Flow {
   }
 
   private async upload(): Promise<void> {
+    if (this.converting) await this.converting;
+    if (this.state.notice === 'photo_type') return; // a HEIC that could not be decoded: another photo is needed
     const token = ++this.uploadToken;
     this.set((state) => uploadStarted(state, token));
     const photo = this.state.photo;

@@ -54,6 +54,33 @@ function Tips() {
   );
 }
 
+/** Same person, a photo that does not work next to one that does (public/tips, generated, fictional people). */
+const EXAMPLES = [
+  { id: 'mamie', ko: () => t.exSittingKo, ok: () => t.exStandingOk },
+  { id: 'homme', ko: () => t.exSelfieKo, ok: () => t.exBodyOk },
+  { id: 'femme', ko: () => t.exGroupKo, ok: () => t.exAloneOk },
+] as const;
+
+function PhotoExamples() {
+  return (
+    <section class="examples" aria-labelledby="examples-title">
+      <h3 id="examples-title">{t.exTitle}</h3>
+      {EXAMPLES.map((ex) => (
+        <div class="ex-row" key={ex.id}>
+          <figure class="ex ko">
+            <img src={`demo/tips/${ex.id}-ko.webp`} alt="" width={240} height={360} loading="lazy" decoding="async" />
+            <figcaption><span class="error-text"><Icon name="x" /></span>{ex.ko()}</figcaption>
+          </figure>
+          <figure class="ex ok">
+            <img src={`demo/tips/${ex.id}-ok.webp`} alt="" width={240} height={360} loading="lazy" decoding="async" />
+            <figcaption><span class="ok-text"><Icon name="check" /></span>{ex.ok()}</figcaption>
+          </figure>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 function Samples({ onFile }: { onFile: (file: Blob, name: string) => void }) {
   const samples = app().services.backend.samples ?? [];
   if (samples.length === 0) return null;
@@ -133,6 +160,7 @@ export function CreateScreen({ slug }: { slug: string }) {
               <PickButton label={t.gallery} icon="image" onFile={(file) => pick(file, file.name)} />
             </div>
             <Tips />
+            <PhotoExamples />
             <Samples onFile={pick} />
           </section>
         ) : (
