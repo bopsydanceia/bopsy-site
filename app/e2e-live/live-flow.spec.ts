@@ -143,9 +143,9 @@ test('live adapters: catalogue, consent, guest with CAPTCHA, check limit, previe
   await page.getByRole('button', { name: 'Send code' }).click();
   await expect(page.getByRole('heading', { name: 'Enter your code' })).toBeVisible();
   await expect(page.getByTestId('demo-code')).toHaveCount(0);
-  await page.getByLabel('6-digit code').fill('000000');
+  await page.getByLabel('Code from the email').fill('000000');
   await expect(page.getByText("That code didn't work. Check it or ask for a new one.")).toBeVisible();
-  await page.getByLabel('6-digit code').fill('123456');
+  await page.getByLabel('Code from the email').fill('123456');
   await expect(page.getByRole('heading', { name: 'Unlock Bopsy' })).toBeVisible();
   await expect(page.getByText("We couldn't load the plans. Check your connection.")).toBeVisible(); // RevenueCat cut off
   log = await mockLog();
@@ -181,7 +181,7 @@ test('live adapters: Send code with a CAPTCHA (refused once, retried), then the 
   expect(captchaOf(otp[0])).toMatch(/^tt-/);
   expect(captchaOf(otp[1])).toMatch(/^tt-/);
   expect(captchaOf(otp[0])).not.toBe(captchaOf(otp[1]));
-  await page.getByLabel('6-digit code').fill('123456');
+  await page.getByLabel('Code from the email').fill('123456');
   await expect(page.getByText('Signed in as rich@example.com')).toBeVisible();
 
   // An account with bought coins: Generate, and the hourly limit (429) with its wait.

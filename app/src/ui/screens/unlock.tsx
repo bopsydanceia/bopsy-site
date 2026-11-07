@@ -64,10 +64,12 @@ export function UnlockScreen() {
     else navigate('/account', { replace: true });
   };
 
-  const onCode = (value: string) => {
+  const onCode = (value: string, pastedEvent: boolean) => {
     const next = otp.codeChanged(state, value);
+    // A whole code arriving in one input (paste, autofill, keyboard suggestion) counts as pasted.
+    const pasted = pastedEvent || next.code.length - state.code.length >= otp.CODE_MIN;
     setState(next);
-    if (otp.canVerify(next)) void verify(next.code);
+    if (otp.autoSubmit(next, pasted)) void verify(next.code);
   };
 
   const wait = otp.resendIn(state, now);
@@ -125,7 +127,11 @@ export function UnlockScreen() {
                 disabled={state.busy}
                 aria-invalid={state.error === 'invalid_code'}
                 aria-describedby={state.error ? 'otp-error' : undefined}
-                onInput={(event) => onCode((event.target as HTMLInputElement).value)}
+                onInput={(event) => {
+                  // Pasted or autofilled (no inputType, or a paste/replacement): the whole code at once.
+                  const kind = (event as InputEvent).inputType;
+                  onCode((event.target as HTMLInputElement).value, !kind || kind === 'insertFromPaste' || kind === 'insertReplacementText');
+                }}
               />
             </div>
             {state.error && <p id="otp-error" class="error-text" role="alert">{errorText(state.error)}</p>}

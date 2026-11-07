@@ -15,7 +15,7 @@ describe('email code (OTP)', () => {
     expect(otp.isValidEmail(' Dancer@Example.com ')).toBe(true);
     expect(otp.isValidEmail('dancer@example')).toBe(false);
     expect(otp.isValidEmail('no spaces@example.com')).toBe(false);
-    expect(otp.sanitizeCode('Code: 123 456 789')).toBe('123456');
+    expect(otp.sanitizeCode('Code: 123 456 789')).toBe('12345678');
   });
 
   test('send, type, verify, fail, resend after 60 s', () => {
@@ -30,6 +30,13 @@ describe('email code (OTP)', () => {
     expect(otp.canVerify(state)).toBe(false);
     state = otp.codeChanged(state, '424242');
     expect(otp.canVerify(state)).toBe(true);
+    // Supabase's newer default sends 8 digits: taken too; typing auto-submits only at 8 or on paste.
+    expect(otp.autoSubmit(state, false)).toBe(false);
+    expect(otp.autoSubmit(state, true)).toBe(true);
+    const eight = otp.codeChanged(state, '18436447');
+    expect(otp.canVerify(eight)).toBe(true);
+    expect(otp.autoSubmit(eight, false)).toBe(true);
+    expect(otp.canVerify(otp.codeChanged(state, '1234567890'))).toBe(true); // cut at 8
     state = otp.failed(otp.verifying(state), 'invalid_code');
     expect(state).toMatchObject({ code: '', error: 'invalid_code', busy: false });
     expect(otp.canResend(state, 30_000)).toBe(false);

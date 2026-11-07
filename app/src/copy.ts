@@ -166,12 +166,12 @@ const en = {
   coinsComeBack: 'Your coins come back automatically.', // commonCoinsComeBack
 
   signInTitle: 'Where should we send your video?', // NEW
-  signInBody: "Enter your email. We'll send you a 6-digit code. Your videos and coins stay with this email.", // NEW
+  signInBody: "Enter your email. We'll send you a code. Your videos and coins stay with this email.", // NEW
   emailLabel: 'Email', // NEW
   sendCode: 'Send code', // NEW
   codeTitle: 'Enter your code', // NEW
-  codeBody: (email: string) => `We sent a 6-digit code to ${email}. You can also tap the link in the email.`, // NEW
-  codeLabel: '6-digit code', // NEW
+  codeBody: (email: string) => `We sent a code to ${email}. You can also tap the link in the email.`, // NEW
+  codeLabel: 'Code from the email', // NEW
   verify: 'Verify', // NEW
   resend: 'Resend code', // NEW
   resendIn: (seconds: number) => `Resend code in ${seconds} s`, // NEW
@@ -457,12 +457,12 @@ const fr: Copy = {
   coinsComeBack: 'Tes pièces te sont rendues automatiquement.',
 
   signInTitle: 'On t’envoie ta vidéo où ?',
-  signInBody: 'Entre ton e-mail. On t’envoie un code à 6 chiffres. Tes vidéos et tes pièces restent liées à cet e-mail.',
+  signInBody: 'Entre ton e-mail. On t’envoie un code. Tes vidéos et tes pièces restent liées à cet e-mail.',
   emailLabel: 'E-mail',
   sendCode: 'Recevoir le code',
   codeTitle: 'Entre ton code',
-  codeBody: (email: string) => `On a envoyé un code à 6 chiffres à ${email}. Tu peux aussi toucher le lien dans l’e-mail.`,
-  codeLabel: 'Code à 6 chiffres',
+  codeBody: (email: string) => `On a envoyé un code à ${email}. Tu peux aussi toucher le lien dans l’e-mail.`,
+  codeLabel: 'Code reçu par e-mail',
   verify: 'Valider',
   resend: 'Renvoyer le code',
   resendIn: (seconds: number) => `Renvoyer le code dans ${seconds} s`,

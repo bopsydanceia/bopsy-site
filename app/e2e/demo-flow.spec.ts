@@ -83,7 +83,7 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   const code = ((await demo.textContent()) ?? '').replace(/\D/g, '');
   expect(code).toHaveLength(6);
   await shot(page, '07-code');
-  await page.getByLabel('6-digit code').fill(code);
+  await page.getByLabel('Code from the email').fill(code);
 
   // Back on the paywall, the checkout of the picked plan opens by itself.
   await expect(page.getByRole('dialog', { name: 'Demo checkout' })).toBeVisible();
@@ -151,7 +151,7 @@ test('demo: a refused photo shows its reason, an EU buyer sees the waiver', asyn
   await page.getByLabel('Email', { exact: true }).fill('eu@example.com');
   await page.getByRole('button', { name: 'Send code' }).click();
   const code = ((await page.getByTestId('demo-code').textContent()) ?? '').replace(/\D/g, '');
-  await page.getByLabel('6-digit code').fill(code);
+  await page.getByLabel('Code from the email').fill(code);
   // The ticked waiver came along: the checkout opens by itself.
   await expect(page.getByRole('dialog', { name: 'Demo checkout' })).toBeVisible();
   await context.close();

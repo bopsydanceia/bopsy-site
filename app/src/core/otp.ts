@@ -1,8 +1,14 @@
-// Email sign-in with a 6-digit code (D110), pure state: the code is typed in
+// Email sign-in with a 6 or 8-digit code (D110), pure state: the code is typed in
 // the page so the in-app browsers of TikTok and Instagram keep the flow (a
 // magic link would open Safari or Chrome).
 
-export const CODE_LENGTH = 6;
+/**
+ * Supabase sends 6 digits, or 8 with its newer default (Authentication >
+ * Email OTP Length): both are taken. Typing auto-submits at the longest;
+ * a pasted code is submitted at once; 6 or 7 typed digits wait for Verify.
+ */
+export const CODE_MIN = 6;
+export const CODE_MAX = 8;
 export const RESEND_AFTER_MS = 60_000;
 
 /** captcha: Turnstile gave no token or Supabase Auth refused it twice (D132). */
@@ -30,9 +36,9 @@ export function isValidEmail(value: string): boolean {
   return email.length <= 254 && /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(email);
 }
 
-/** Keeps digits only (pasted "123 456" or "Code: 123456"), at most 6. */
+/** Keeps digits only (pasted "123 456" or "Code: 123456"), at most 8. */
 export function sanitizeCode(value: string): string {
-  return value.replace(/\D/g, '').slice(0, CODE_LENGTH);
+  return value.replace(/\D/g, '').slice(0, CODE_MAX);
 }
 
 export function emailChanged(state: OtpState, value: string): OtpState {
@@ -60,7 +66,12 @@ export function codeChanged(state: OtpState, value: string): OtpState {
 }
 
 export function canVerify(state: OtpState): boolean {
-  return state.step === 'code' && !state.busy && state.code.length === CODE_LENGTH;
+  return state.step === 'code' && !state.busy && state.code.length >= CODE_MIN && state.code.length <= CODE_MAX;
+}
+
+/** Submit without waiting for Verify: the longest code typed, or a whole code pasted or autofilled. */
+export function autoSubmit(next: OtpState, pasted: boolean): boolean {
+  return canVerify(next) && (pasted || next.code.length === CODE_MAX);
 }
 
 export function verifying(state: OtpState): OtpState {
