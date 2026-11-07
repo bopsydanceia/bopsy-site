@@ -1,7 +1,8 @@
-// 8. The result (16): plays muted in a loop, Download the MP4, Share (Web
+// 8. The result (16): plays in a loop, muted at first (autoplay rule) with a
+// Sound on button (the video keeps the trend's sound, D146), Download the MP4, Share (Web
 // Share API with the file, else the link, else copy the link), report the
 // video, Make another (C11).
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { t } from '../../copy';
 import { navigate } from '../../core/router';
 import { downloadName, shareVideo } from '../../core/share';
@@ -18,6 +19,15 @@ export function ResultScreen({ id }: { id: string }) {
   const wallet = useStore(app().wallet);
   const video = load.status === 'ok' ? load.video : null;
   const dance = video ? danceById(video.danceId) : undefined;
+  const player = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const toggleSound = () => {
+    const el = player.current;
+    if (!el) return;
+    el.muted = !el.muted;
+    setMuted(el.muted);
+    if (el.paused) el.play().catch(() => undefined);
+  };
   const fileName = downloadName(dance?.name ?? 'dance');
   const url = useVideoUrl(video);
   const downloadUrl = useVideoUrl(video, fileName);
@@ -79,13 +89,18 @@ export function ResultScreen({ id }: { id: string }) {
         <div class="pane pane-media">
         <div class="player">
           {url ? (
-            <video src={url} autoplay muted loop playsInline aria-label={t.resultVideoLabel(dance?.name ?? '')} onClick={(event) => {
+            <video ref={player} src={url} autoplay muted loop playsInline aria-label={t.resultVideoLabel(dance?.name ?? '')} onClick={(event) => {
               const player = event.currentTarget as HTMLVideoElement;
               if (player.paused) void player.play();
               else player.pause();
             }} />
           ) : (
             <div class="skeleton" style={{ height: '100%' }} />
+          )}
+          {url && (
+            <button type="button" class="trend-sound" onClick={toggleSound} aria-pressed={!muted}>
+              {muted ? t.soundOn : t.soundOff}
+            </button>
           )}
           {photoUrl && <div class="inset"><img src={photoUrl} alt={t.originalPhoto} /></div>}
         </div>
