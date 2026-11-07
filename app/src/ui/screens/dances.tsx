@@ -49,7 +49,7 @@ function CardVideo({ src }: { src: string }) {
 function DanceCard({ dance, eager, priority }: { dance: Dance; eager: boolean; priority: boolean }) {
   const tag = dance.family === 'pets' ? null : dance.isNew ? 'new' : dance.isHot ? 'hot' : null;
   return (
-    <a class="card" href={`#/create/${dance.slug}`}>
+    <a class="card" href={`#/trend/${dance.slug}`}>
       {dance.posterUrl && (
         <img
           src={dance.posterUrl}

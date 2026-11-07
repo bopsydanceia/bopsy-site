@@ -69,6 +69,11 @@ const en = {
   offline: "You're offline. Check your connection.", // commonOffline
   backHome: 'Back to Home', // commonBackHome
   back: 'Back', // a11yBack
+  usePhoto: 'Use my photo', // NEW (trend screen)
+  trendHint: 'One photo of you, whole body in the frame, and you are in this trend.', // NEW (trend screen)
+  soundOn: 'Sound on', // NEW (trend screen)
+  soundOff: 'Sound off', // NEW (trend screen)
+  trendVideoLabel: (name: string) => `${name}: example video`, // NEW (a11y)
   close: 'Close', // a11yClose
   cancel: 'Cancel', // commonCancel
   continue: 'Continue', // commonContinue
@@ -348,6 +353,11 @@ const fr: Copy = {
   offline: 'Tu es hors ligne. Vérifie ta connexion.',
   backHome: 'Retour à l’accueil',
   back: 'Retour',
+  usePhoto: 'Importer ma photo',
+  trendHint: 'Une photo de toi en pied, et tu es dans cette trend.',
+  soundOn: 'Activer le son',
+  soundOff: 'Couper le son',
+  trendVideoLabel: (name: string) => `${name} : vidéo d’exemple`,
   close: 'Fermer',
   cancel: 'Annuler',
   continue: 'Continuer',

@@ -4,6 +4,7 @@ import { createStore } from './store';
 
 export type Route =
   | { name: 'dances' }
+  | { name: 'trend'; slug: string }
   | { name: 'create'; slug: string }
   | { name: 'preview'; id: string }
   | { name: 'ready' }
@@ -29,6 +30,8 @@ export function parseHash(hash: string): Route {
   switch (head) {
     case undefined:
       return { name: 'dances' };
+    case 'trend':
+      return valid ? { name: 'trend', slug: id } : { name: 'dances' };
     case 'create':
       return valid ? { name: 'create', slug: id } : { name: 'dances' };
     case 'preview':
@@ -53,8 +56,9 @@ export function pathOf(route: Route): string {
     case 'dances':
     case 'auth':
       return '/';
+    case 'trend':
     case 'create':
-      return `/create/${route.slug}`;
+      return `/${route.name}/${route.slug}`;
     case 'preview':
     case 'generating':
     case 'video':

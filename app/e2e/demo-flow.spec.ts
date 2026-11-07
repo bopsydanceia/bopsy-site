@@ -31,6 +31,9 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   await expect(page.getByText('Demo', { exact: true })).toBeVisible();
   await shot(page, '01-dances');
   await page.getByRole('link', { name: 'Street Bounce' }).click();
+  // The trend in big first (its demo full screen), then the photo step.
+  await expect(page.getByRole('heading', { name: 'Street Bounce' })).toBeVisible();
+  await page.getByRole('link', { name: 'Use my photo' }).click();
 
   await expect(page.getByRole('heading', { name: 'Join the trend' })).toBeVisible();
   await expect(page.getByText('Whole body in the frame', { exact: true })).toBeVisible();
@@ -104,6 +107,7 @@ test('demo: from a photo to a paid video', async ({ page }) => {
   await page.getByRole('button', { name: 'Make another' }).click();
   await expect(page.getByText('Pick a trend for your photo.')).toBeVisible();
   await page.getByRole('link', { name: 'Hip Sway' }).click();
+  await page.getByRole('link', { name: 'Use my photo' }).click();
   await expect(page.getByText('Full body detected')).toBeVisible();
   await expect(page.getByLabel("This is me, or I have this person's permission to use their photo.")).not.toBeChecked();
   await expect(page.getByRole('button', { name: 'Generate · 60 coins' })).toBeDisabled();
