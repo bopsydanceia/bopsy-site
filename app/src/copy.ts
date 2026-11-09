@@ -88,7 +88,7 @@ const en = {
   danceMeta: (seconds: number, cost: number) => `${seconds} s · ${enCoins(cost)}`, // createDanceMeta
   change: 'Change', // createChangeDance
   addPhotoTitle: 'Add a photo', // createAddPhotoTitle
-  addPhotoBody: 'Whole body in the frame. One person, sharp photo.', // createAddPhotoBody
+  addPhotoBody: 'Whole body in the frame, sharp photo: one person, or your dog or cat.', // createAddPhotoBody
   camera: 'Camera', // createCamera
   gallery: 'Gallery', // createGallery
   tipsTitle: 'Photo tips', // photoTipsTitle
@@ -100,7 +100,7 @@ const en = {
   exGroupKo: 'Several people', // NEW
   exAloneOk: 'Alone in the photo', // NEW
   tipWholeBody: 'Whole body in the frame', // photoTipsRuleWholeBody
-  tipOneSubject: 'One adult, alone in the photo', // NEW (photoTipsRuleOneSubject aligned on C8)
+  tipOneSubject: 'One adult alone, or your dog or cat', // NEW (photoTipsRuleOneSubject aligned on C8)
   tipSharp: 'Sharp photo, good light', // photoTipsRuleSharp
   tipsWontWork: "Won't work", // photoTipsWontWork
   tipsFaceOnly: 'Face only', // photoTipsFaceOnly
@@ -318,12 +318,12 @@ const en = {
   coinBalance: (balance: number) => enCoins(balance), // a11yCoinBalance
 
   rejection: {
-    several_subjects: 'We found more than one person. Use a photo with just one.', // createReadyRejectMultiple
+    several_subjects: 'We found more than one person or animal. Use a photo with just one.', // createReadyRejectMultiple
     body_not_visible: "We couldn't see the whole body. Try a photo with the whole body in the frame.", // createReadyRejectNotFullBody
     looks_like_child: 'This photo looks like it shows a child. Use a photo of an adult.', // createReadyRejectChild
     unsafe_content: 'This photo may show nudity or violence. Choose another one.', // createReadyRejectUnsafe
-    no_subject: "We couldn't find a person in this photo. Choose another one.", // createReadyRejectNoSubject
-    unsupported_subject: 'Use a photo of one person.', // createReadyRejectUnsupportedSubject
+    no_subject: "We couldn't find a person, dog or cat in this photo. Choose another one.", // createReadyRejectNoSubject
+    unsupported_subject: 'For now it works with a person, a dog or a cat. Choose another photo.', // createReadyRejectUnsupportedSubject
   } as Record<PhotoRejection, string>,
   reportReasons: {
     sexual: 'Sexual or suggestive', // resultReportReasonSexual
@@ -386,7 +386,7 @@ const fr: Copy = {
   danceMeta: (seconds: number, cost: number) => `${seconds} s · ${frCoins(cost)}`,
   change: 'Changer',
   addPhotoTitle: 'Ajoute une photo',
-  addPhotoBody: 'En pied, bien nette : une seule personne.',
+  addPhotoBody: 'En pied, bien nette : une seule personne, ou ton chien ou ton chat.',
   camera: 'Appareil photo',
   gallery: 'Galerie',
   tipsTitle: 'Conseils photo',
@@ -398,7 +398,7 @@ const fr: Copy = {
   exGroupKo: 'Plusieurs personnes',
   exAloneOk: 'Seule sur la photo',
   tipWholeBody: 'Le corps entier dans le cadre',
-  tipOneSubject: 'Un adulte, seul sur la photo',
+  tipOneSubject: 'Un adulte seul, ou ton chien ou ton chat',
   tipSharp: 'Photo nette, bonne lumière',
   tipsWontWork: 'Ça ne marchera pas',
   tipsFaceOnly: 'Visage seul',
@@ -417,7 +417,7 @@ const fr: Copy = {
   scanButton: 'Scan de ta photo…',
   fullBody: 'Corps entier détecté',
   cantUse: 'Photo inutilisable',
-  consent: 'C’est moi, ou j’ai l’accord de cette personne pour utiliser sa photo.',
+  consent: 'C’est moi ou mon animal, ou j’ai l’accord de cette personne pour utiliser sa photo.',
   aiNotice: 'Ta photo est envoyée à nos partenaires IA pour la vérifier et créer ta vidéo.',
   privacy: 'Confidentialité',
   terms: 'Conditions',
@@ -617,12 +617,12 @@ const fr: Copy = {
   coinBalance: (balance: number) => frCoins(balance),
 
   rejection: {
-    several_subjects: 'On voit plus d’une personne. Utilise une photo où tu es seul ou seule.',
+    several_subjects: 'On voit plus d’une personne ou d’un animal. Utilise une photo avec un seul sujet.',
     body_not_visible: 'On ne voit pas le corps entier. Essaie une photo avec tout le corps dans le cadre.',
     looks_like_child: 'Cette photo semble montrer un enfant. Utilise la photo d’un adulte.',
     unsafe_content: 'Cette photo pourrait montrer de la nudité ou de la violence. Choisis-en une autre.',
-    no_subject: 'On ne trouve personne sur cette photo. Choisis-en une autre.',
-    unsupported_subject: 'Utilise la photo d’une seule personne.',
+    no_subject: 'On ne trouve ni personne, ni chien, ni chat sur cette photo. Choisis-en une autre.',
+    unsupported_subject: 'Pour l’instant, ça marche avec une personne, un chien ou un chat. Choisis une autre photo.',
   },
   reportReasons: {
     sexual: 'Sexuel ou suggestif',

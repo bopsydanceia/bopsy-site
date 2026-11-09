@@ -130,7 +130,7 @@ test('demo: a refused photo shows its reason, an EU buyer sees the waiver', asyn
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
   await page.locator('input[type=file]:not([capture])').first().setInputFiles({ name: 'group-photo.png', mimeType: 'image/png', buffer: png });
   await page.getByLabel("This is me, or I have this person's permission to use their photo.").check();
-  await expect(page.getByText('We found more than one person. Use a photo with just one.')).toBeVisible();
+  await expect(page.getByText('We found more than one person or animal. Use a photo with just one.')).toBeVisible();
   await expect(page.getByText("Can't use this photo")).toBeVisible();
   await shot(page, '12-rejected');
 
