@@ -76,7 +76,9 @@ interface HeaderProps {
 
 export function Header({ title, back, close, brand, right }: HeaderProps) {
   const session = useStore(app().session);
-  const onSignIn = useStore(routeStore).name === 'unlock';
+  const routeName = useStore(routeStore).name;
+  const onSignIn = routeName === 'unlock';
+  const signedIn = session !== null && !session.guest;
   return (
     <header class="top">
       <div class="top-left">
@@ -101,8 +103,15 @@ export function Header({ title, back, close, brand, right }: HeaderProps) {
         <DemoBadge />
         {right ?? (
           <>
+            {/* Phone: My videos one tap away once signed in (the computer has it in the nav). */}
+            {signedIn && routeName !== 'videos' && (
+              <a class={title ? 'login-pill videos-pill compact mobile-only' : 'login-pill videos-pill mobile-only'} href="#/videos" aria-label={title ? t.myVideos : undefined}>
+                <Icon name="play" />
+                {!title && t.myVideos}
+              </a>
+            )}
             <CoinPill />
-            {(!session || session.guest) && !onSignIn && (
+            {!signedIn && !onSignIn && (
               <a class="login-pill mobile-only" href="#/login">{t.signIn}</a>
             )}
           </>
