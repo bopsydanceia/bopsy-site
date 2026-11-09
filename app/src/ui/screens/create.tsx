@@ -3,7 +3,7 @@
 // the box is ticked (D50); then the check (checking, accepted, rejection
 // with its reason) and the main button (Generate for a buyer, else Make my
 // video, D139; the free preview only when it is on).
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { FREE_PREVIEW, LINKS } from '../../config';
 import { rejectionText, t } from '../../copy';
 import { primaryAction } from '../../core/flow';
@@ -166,7 +166,8 @@ export function CreateScreen({ slug }: { slug: string }) {
         ) : (
             <div class="photo">
               {photo.url ? <img src={photo.url} alt={t.yourPhoto} /> : <div class="skeleton" style={{ height: '100%' }} />}
-              <span class="badge" role="status" aria-live="polite">
+              {photo.kind === 'sending' && <ScanOverlay key={photo.token} />}
+              <span class={photo.kind === 'sending' ? 'badge sr-only' : 'badge'} role="status" aria-live="polite">
                 {photo.kind === 'local' && t.notSent}
                 {photo.kind === 'sending' && t.checking}
                 {photo.kind === 'accepted' && (<><span class="ok-text"><Icon name="check" /></span>{t.fullBody}</>)}
@@ -214,12 +215,39 @@ export function CreateScreen({ slug }: { slug: string }) {
         )}
         <div class="cta-bar">
           <button type="button" class="btn btn-cta btn-block" disabled={!ready} aria-busy={state.busy !== null} onClick={() => void run()}>
-            {state.busy ? '…' : label}
+            {state.busy ? '…' : photo.kind === 'sending' ? <><span class="spinner" aria-hidden="true" />{t.scanButton}</> : label}
           </button>
           {action === 'generate' && <p class="note">{t.videoFailedQ} {t.coinsComeBack}</p>}
         </div>
         </div>
       </main>
     </>
+  );
+}
+
+/**
+ * While the photo is sent and checked: a scan line sweeps the photo and the
+ * steps read out what happens (sending, then the check), so the wait before
+ * the button wakes up is visibly work in progress.
+ */
+function ScanOverlay() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const timers = [setTimeout(() => setStep(1), 1600), setTimeout(() => setStep(2), 4200)];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  const steps = [t.scanSending, t.scanBody, t.scanAlmost];
+  return (
+    <div class="photo-scan" aria-hidden="true">
+      <div class="scan-line" />
+      <div class="scan-corners"><i /><i /><i /><i /></div>
+      <div class="scan-label">
+        <span class="spinner" />
+        <span>
+          <b>{t.scanTitle}</b>
+          <small>{steps[step]}</small>
+        </span>
+      </div>
+    </div>
   );
 }

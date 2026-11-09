@@ -112,6 +112,11 @@ const en = {
   replace: 'Replace', // createReadyReplace
   notSent: 'Not sent yet', // createReadyNotSent
   checking: 'Checking your photo…', // createReadyChecking
+  scanTitle: 'Scanning your photo',
+  scanSending: 'Sending the photo…',
+  scanBody: 'Finding you to start your video…',
+  scanAlmost: 'Almost there…',
+  scanButton: 'Scanning your photo…',
   fullBody: 'Full body detected', // createReadyFullBodyDetected
   cantUse: "Can't use this photo", // createReadyErrorBadge
   consent: "This is me, or I have this person's permission to use their photo.", // createReadyConsent
@@ -405,6 +410,11 @@ const fr: Copy = {
   replace: 'Remplacer',
   notSent: 'Pas encore envoyée',
   checking: 'On vérifie ta photo…',
+  scanTitle: 'On scanne ta photo',
+  scanSending: 'Envoi de la photo…',
+  scanBody: 'On te repère pour lancer ta vidéo…',
+  scanAlmost: 'Presque prêt…',
+  scanButton: 'Scan de ta photo…',
   fullBody: 'Corps entier détecté',
   cantUse: 'Photo inutilisable',
   consent: 'C’est moi, ou j’ai l’accord de cette personne pour utiliser sa photo.',
