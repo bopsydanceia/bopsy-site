@@ -313,7 +313,8 @@ const en = {
   coinsDetailYearly: (bought: number) => `240 every month · unused coins don't roll over · ${formatNumber(bought)} bought, never expire`, // settingsCoinsDetailYearly
   coinsDetailNoPlan: (bought: number) => `${formatNumber(bought)} bought, never expire`, // settingsCoinsDetailNoPlan
   getPro: 'Get Bopsy Pro', // settingsGetPro
-  manage: 'Manage subscription', // NEW (settingsManage)
+  manage: 'Manage or cancel subscription', // NEW (settingsManage)
+  proPlan: 'Bopsy Pro',
   manageFallback: 'Write to us from the Support page to change your plan.', // NEW
   buyCoinsLink: 'Buy coins', // settingsBuyCoins
   deleteMedia: 'Delete my photos and videos', // settingsDeleteMedia
@@ -624,7 +625,8 @@ const fr: Copy = {
   coinsDetailYearly: (bought: number) => `240 chaque mois · non cumulables · ${formatNumber(bought)} achetées, sans expiration`,
   coinsDetailNoPlan: (bought: number) => `${formatNumber(bought)} achetées, sans expiration`,
   getPro: 'Passer à Bopsy Pro',
-  manage: 'Gérer l’abonnement',
+  manage: 'Gérer ou annuler l’abonnement',
+  proPlan: 'Bopsy Pro',
   manageFallback: 'Écris-nous depuis la page Support pour changer d’abonnement.',
   buyCoinsLink: 'Acheter des pièces',
   deleteMedia: 'Supprimer mes photos et vidéos',

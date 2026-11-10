@@ -50,8 +50,8 @@ describe('dictionaries', () => {
     expect(fr.coins(60)).toBe('60 pièces');
     expect(fr.planTitle({ price: '7,99 €', period: 'week', intro: null })).toBe('7,99 € / semaine');
     const same = Object.keys(en).filter((key) => typeof en[key as keyof typeof en] === 'string' && en[key as keyof typeof en] === fr[key as keyof typeof fr]);
-    // "trend" and "HOT" are the same words in French (anglicismes of the target).
-    expect(same.sort()).toEqual(['badgeHot', 'danceFallback', 'danceLabel', 'navDances', 'ok', 'wordmark']);
+    // "trend" and "HOT" are the same words in French (anglicismes of the target); "Bopsy Pro" is a name.
+    expect(same.sort()).toEqual(['badgeHot', 'danceFallback', 'danceLabel', 'navDances', 'ok', 'proPlan', 'wordmark']);
   });
 
   test('legal links: the French pages live under fr/', () => {

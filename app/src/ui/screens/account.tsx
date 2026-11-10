@@ -16,6 +16,12 @@ export function AccountScreen() {
   const wallet = useStore(app().wallet);
   const signedIn = session !== null && !session.guest;
   const [account] = useLoad(() => (signedIn ? services.backend.account() : Promise.resolve(null)), [session?.userId, signedIn, wallet?.total]);
+  // RevenueCat's view of the plan too: Manage / cancel shows when either side says Pro
+  // (the server may lag behind a renewal, or miss a store event).
+  const [offer] = useLoad(
+    () => (signedIn && session ? services.billing().then((billing) => billing.offer(session)).catch(() => null) : Promise.resolve(null)),
+    [session?.userId, signedIn],
+  );
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -23,8 +29,8 @@ export function AccountScreen() {
     if (!session) return;
     setBusy(true);
     try {
-      const offer = await (await services.billing()).offer(session);
-      if (offer.managementUrl) location.href = offer.managementUrl;
+      const current = await (await services.billing()).offer(session);
+      if (current.managementUrl) location.href = current.managementUrl;
       else showToast(t.manageFallback);
     } catch {
       showToast(t.error);
@@ -48,6 +54,8 @@ export function AccountScreen() {
   };
 
   const sub = account.status === 'ready' ? account.value?.subscription ?? null : null;
+  const rcOffer = offer.status === 'ready' ? offer.value : null;
+  const pro = sub?.active === true || rcOffer?.proActive === true;
   const bought = wallet?.bought ?? 0;
   const detail = sub?.active ? (sub.period === 'yearly' ? t.coinsDetailYearly(bought) : t.coinsDetailWeekly(bought)) : t.coinsDetailNoPlan(bought);
 
@@ -75,10 +83,10 @@ export function AccountScreen() {
                 </span>
                 <span class="pill"><Icon name="coin" />{wallet ? formatNumber(wallet.total) : '…'}</span>
               </div>
-              {sub?.active ? (
+              {pro ? (
                 <>
                   <button type="button" class="row" disabled={busy} onClick={() => void manage()}>
-                    <span>{sub.period === 'yearly' ? t.yearlyPlan : t.weeklyPlan}<small>{t.manage}</small></span>
+                    <span>{sub?.active ? (sub.period === 'yearly' ? t.yearlyPlan : t.weeklyPlan) : t.proPlan}<small>{t.manage}</small></span>
                   </button>
                 </>
               ) : (
