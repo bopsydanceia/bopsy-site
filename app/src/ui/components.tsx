@@ -112,6 +112,12 @@ export function Header({ title, back, close, brand, right }: HeaderProps) {
               </a>
             )}
             <CoinPill />
+            {/* Phone: the settings behind a small gear, once signed in. */}
+            {signedIn && routeName !== 'account' && (
+              <a class="icon-btn gear mobile-only" href="#/account" aria-label={t.settings}>
+                <Icon name="settings" />
+              </a>
+            )}
             {!signedIn && !onSignIn && (
               <a class="login-pill mobile-only" href="#/login">{t.signIn}</a>
             )}

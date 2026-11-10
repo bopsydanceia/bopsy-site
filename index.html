@@ -337,7 +337,8 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
       new URLSearchParams(location.search).forEach(function (v, k) { target.searchParams.set(k, v); });
       target.searchParams.set('lang', lang);
       ctas.forEach(function (a) { a.href = target.toString(); a.removeAttribute('aria-disabled'); a.removeAttribute('tabindex'); });
-      target.hash = signedIn ? '#/account' : '#/login';
+      // Signed in: My account opens the app itself (trends, videos, coins; settings behind its gear).
+      target.hash = signedIn ? '#/' : '#/login';
       login.href = target.toString();
       login.hidden = false;
     }

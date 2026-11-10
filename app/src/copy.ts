@@ -63,6 +63,7 @@ const en = {
     victory: 'Victory moves', // homeVictoryTitle
   },
   familiesNav: 'Categories',
+  settings: 'Settings',
   familyChips: { trends: '🔥 Trending', pets: '🐾 Pets', memes: '😂 Memes', party: '🎉 Party', victory: '🏆 Victory' },
   badgeNew: 'NEW', // commonBadgeNew
   badgeHot: 'HOT', // homeBadgeHot
@@ -372,6 +373,7 @@ const fr: Copy = {
     victory: 'Danses de la victoire',
   },
   familiesNav: 'Catégories',
+  settings: 'Paramètres',
   familyChips: { trends: '🔥 Tendances', pets: '🐾 Animaux', memes: '😂 Mèmes', party: '🎉 Soirée', victory: '🏆 Victoire' },
   badgeNew: 'NOUVEAU',
   badgeHot: 'HOT',
