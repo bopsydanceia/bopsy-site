@@ -346,6 +346,43 @@ footer nav a:hover { color: var(--ink); text-decoration: underline; }
 
   try { apply(window.BOPSY_LANG || 'en'); } finally { document.documentElement.classList.remove('i18n-wait'); }
 
+  // D152: first-party analytics (same visitor id and ad source as the app,
+  // no third party, no advertising cookie). Public publishable key: insert only.
+  var A = { url: 'https://epwxusmvjeyeljyqzzda.supabase.co', key: 'sb_publishable_ieu290ueFshL5wmrVsmDKQ_uUR7nCIh' };
+  function aid(store, k) {
+    try { var v = store.getItem(k); if (!v) { v = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()); store.setItem(k, v); } return v; } catch (e) { return null; }
+  }
+  function asource() {
+    try { var cached = sessionStorage.getItem('bopsy.src'); if (cached) return JSON.parse(cached); } catch (e) {}
+    var q = new URLSearchParams(location.search), ref = null;
+    try { var h = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : ''; ref = h && h !== location.hostname.replace(/^www\./, '') ? h : null; } catch (e) {}
+    var paid = q.has('ttclid') || q.has('fbclid') || q.has('gclid');
+    var src = {
+      source: q.get('utm_source') || (q.has('ttclid') ? 'tiktok' : q.has('fbclid') ? 'facebook' : q.has('gclid') ? 'google' : null),
+      medium: q.get('utm_medium') || (paid ? 'paid' : null),
+      campaign: q.get('utm_campaign'),
+      referrer: ref
+    };
+    try { sessionStorage.setItem('bopsy.src', JSON.stringify(src)); } catch (e) {}
+    return src;
+  }
+  function atrack(name, props) {
+    var vid = aid(localStorage, 'bopsy.vid'), sid = aid(sessionStorage, 'bopsy.sid');
+    if (!vid || !sid || !window.fetch) return;
+    var ua = navigator.userAgent, src = asource();
+    var row = {
+      visitor_id: vid, session_id: sid, name: name, path: location.pathname, props: props || {},
+      source: src.source, medium: src.medium, campaign: src.campaign, referrer: src.referrer,
+      device: /iPad|Tablet/i.test(ua) ? 'tablet' : (/Mobi|iPhone|Android/i.test(ua) || innerWidth < 700 ? 'mobile' : 'desktop'),
+      lang: document.documentElement.lang || 'en',
+      in_app: /musical_ly|BytedanceWebview|TikTok/i.test(ua) ? 'tiktok' : /Instagram/i.test(ua) ? 'instagram' : /FBAN|FBAV|FB_IAB/i.test(ua) ? 'facebook' : /Snapchat/i.test(ua) ? 'snapchat' : null
+    };
+    fetch(A.url + '/rest/v1/analytics_events', { method: 'POST', keepalive: true, headers: { apikey: A.key, 'content-type': 'application/json', prefer: 'return=minimal' }, body: JSON.stringify([row]) }).catch(function () {});
+  }
+  atrack('landing_view');
+  ctas.forEach(function (a) { a.addEventListener('click', function () { atrack('landing_cta', { id: a.id || 'sticky' }); }); });
+  if (login) login.addEventListener('click', function () { atrack('landing_login', { signed_in: signedIn }); });
+
   document.querySelectorAll('.lang a').forEach(function (a) {
     a.addEventListener('click', function (e) {
       e.preventDefault();

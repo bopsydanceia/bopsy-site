@@ -20,6 +20,7 @@ import { Checkbox, ErrorState, Header, Sheet } from '../components';
 import { useStore } from '../hooks';
 import { Icon } from '../icons';
 import { noticeText } from '../notices';
+import { track } from '../../core/analytics';
 
 function PlanCard({ plan, weekly, selected, onSelect }: { plan: PlanItem; weekly: PlanItem | undefined; selected: boolean; onSelect: () => void }) {
   const save = plan.period === 'year' && weekly ? savePercent(weekly.price, plan.price) : null;
@@ -141,9 +142,11 @@ export function PaywallScreen({ shop = false }: { shop?: boolean }) {
       return;
     }
     setState((s) => ({ ...s, status: 'buying', error: null }));
+    track('checkout_start', { product: item.productId, shop });
     const billing = await services.billing();
     const outcome = await billing.purchase(session, item, { email: session.email, target: host.current, metadata: { ...pw.purchaseMetadata(current, new Date()), locale: LOCALE } });
     host.current?.replaceChildren();
+    track(outcome.kind === 'purchased' ? 'purchase_done' : outcome.kind === 'failed' ? 'purchase_failed' : 'checkout_closed', { product: item.productId, shop });
     if (outcome.kind === 'purchased') await afterPurchase();
     else setState((s) => ({ ...s, status: 'ready', error: outcome.kind === 'failed' ? 'purchase_failed' : null }));
   };

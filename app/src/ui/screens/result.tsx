@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { t } from '../../copy';
 import { navigate } from '../../core/router';
 import { downloadName, shareVideo } from '../../core/share';
+import { track } from '../../core/analytics';
 import { app, danceById, showToast } from '../app-state';
 import { ErrorState, Header, Loading } from '../components';
 import { useStore } from '../hooks';
@@ -74,6 +75,7 @@ export function ResultScreen({ id }: { id: string }) {
   }
 
   const share = async () => {
+    track('video_share');
     if (!url) return;
     setSharing(true);
     const outcome = await shareVideo({ file, url, title: dance?.name ?? 'Bopsy' });
@@ -114,7 +116,7 @@ export function ResultScreen({ id }: { id: string }) {
           {wallet && <span class="pill"><Icon name="coin" />{t.coinsLeft(wallet.total)}</span>}
         </div>
         <div class="actions">
-          <a class="btn btn-secondary" href={downloadUrl ?? url ?? undefined} download={fileName} aria-disabled={!url}>
+          <a class="btn btn-secondary" href={downloadUrl ?? url ?? undefined} download={fileName} aria-disabled={!url} onClick={() => track('video_download')}>
             <Icon name="download" />
             {t.download}
           </a>

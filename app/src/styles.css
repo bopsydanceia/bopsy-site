@@ -396,3 +396,29 @@ textarea { width: 100%; min-height: 84px; padding: 12px; border-radius: 14px; bo
 .ex figcaption svg { width: 16px; height: 16px; flex: none; }
 .ex.ok { outline: 2px solid color-mix(in srgb, var(--ok, #3ddc84) 70%, transparent); }
 @media (min-width: 900px) { .ex-row { gap: 14px; } }
+
+/* Admin dashboard (D152) */
+.admin { max-width: 1100px; }
+.admin h2 { font: 800 20px/1.2 var(--display); margin: 28px 0 10px; }
+.admin .range { max-width: 360px; grid-template-columns: repeat(4, 1fr); }
+.admin-body.loading { opacity: 0.55; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.kpi { display: grid; gap: 2px; padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); }
+.kpi-label { color: var(--text-soft); font-size: 13px; }
+.kpi-value { font: 800 24px/1.1 var(--display); }
+.kpi-hint { color: var(--muted); font-size: 12px; }
+.funnel { display: grid; gap: 6px; }
+.funnel-row { display: grid; grid-template-columns: minmax(120px, 210px) 1fr 52px 56px 56px; gap: 10px; align-items: center; font-size: 14px; }
+.funnel-bar { height: 14px; border-radius: 7px; background: var(--surface); overflow: hidden; }
+.funnel-bar i { display: block; height: 100%; background: var(--cta); border-radius: 7px; }
+.funnel-pct, .funnel-drop { color: var(--text-soft); font-size: 13px; text-align: right; }
+.funnel-drop.bad { color: #ff6b6b; font-weight: 800; }
+.daily { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 8px 0; overflow-x: auto; }
+.daily-col { flex: 1 0 22px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.daily-col i { display: block; width: 100%; min-height: 2px; border-radius: 6px 6px 2px 2px; background: var(--accent); }
+.daily-col span { font-size: 10px; color: var(--muted); }
+.atable-wrap { overflow-x: auto; margin-bottom: 10px; }
+.atable { width: 100%; border-collapse: collapse; font-size: 14px; }
+.atable th { text-align: left; color: var(--text-soft); font-weight: 700; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.atable td { padding: 6px 8px; border-bottom: 1px solid var(--border); word-break: break-all; }
+@media (max-width: 600px) { .funnel-row { grid-template-columns: 1fr 44px 48px 48px; } .funnel-bar { grid-column: 1 / -1; grid-row: 2; } }

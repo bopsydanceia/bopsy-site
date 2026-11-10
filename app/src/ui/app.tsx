@@ -22,6 +22,7 @@ const PaywallScreen = lazyScreen(() => withFlow(import('./screens/paywall')).the
 const GeneratingScreen = lazyScreen(() => withFlow(import('./screens/generating')).then((m) => m.GeneratingScreen));
 const ResultScreen = lazyScreen(() => withFlow(import('./screens/result')).then((m) => m.ResultScreen));
 const VideosScreen = lazyScreen(() => withFlow(import('./screens/videos')).then((m) => m.VideosScreen));
+const AdminScreen = lazyScreen(() => import('./screens/admin').then((m) => m.AdminScreen));
 const AccountScreen = lazyScreen(() => withFlow(import('./screens/account')).then((m) => m.AccountScreen));
 
 /** Fetches the other screens once the first one is on screen. */
@@ -49,6 +50,8 @@ function Screen({ route }: { route: Route }) {
       return <PaywallScreen />;
     case 'shop':
       return <PaywallScreen shop />;
+    case 'admin':
+      return <AdminScreen />;
     case 'generating':
       return <GeneratingScreen id={route.id} />;
     case 'video':

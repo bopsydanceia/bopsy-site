@@ -11,6 +11,7 @@ export type Route =
   | { name: 'unlock' }
   | { name: 'paywall' }
   | { name: 'shop' }
+  | { name: 'admin' }
   | { name: 'generating'; id: string }
   | { name: 'video'; id: string }
   | { name: 'videos' }
@@ -47,6 +48,7 @@ export function parseHash(hash: string): Route {
     case 'unlock':
     case 'paywall':
     case 'shop':
+    case 'admin':
     case 'videos':
     case 'account':
       return parts.length === 1 ? { name: head } : { name: 'dances' };
