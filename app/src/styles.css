@@ -212,6 +212,7 @@ a.pill::after { content: ''; position: absolute; inset: -4px 0; } /* 44 px targe
 .legal-links a { color: var(--muted); font-size: 14px; padding: 12px 0; }
 .waiver { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; margin: 12px 0 0; cursor: pointer; font-size: 14px; color: var(--text-soft); }
 .cta-bar .waiver { margin: 0 0 12px; font-size: 13px; }
+.spam-hint { margin: -6px 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--surface); color: var(--text-soft); font-size: 14px; }
 .checkout-host:empty { display: none; }
 .checkout-host { position: fixed; inset: 0; z-index: 30; overflow: auto; background: rgba(18, 14, 24, 0.86); padding: calc(16px + env(safe-area-inset-top)) var(--gutter-r) calc(16px + env(safe-area-inset-bottom)) var(--gutter); }
 .checkout { max-width: 400px; margin: 10vh auto 0; display: grid; gap: 12px; padding: 22px; border-radius: 28px; background: var(--surface); }

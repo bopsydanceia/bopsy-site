@@ -119,6 +119,7 @@ export function UnlockScreen() {
           <form onSubmit={(event) => { event.preventDefault(); if (otp.canVerify(state)) void verify(state.code); }} noValidate>
             <h1 class="title">{t.codeTitle}</h1>
             <p class="lede">{t.codeBody(state.email)}</p>
+            <p class="spam-hint">{t.spamHint}</p>
             {state.demoCode && <p class="demo-code" data-testid="demo-code">{t.demoCode(state.demoCode)}</p>}
             <div class="field">
               <label for="code">{t.codeLabel}</label>

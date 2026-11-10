@@ -178,6 +178,7 @@ const en = {
   emailLabel: 'Email', // NEW
   sendCode: 'Send code', // NEW
   codeTitle: 'Enter your code', // NEW
+  spamHint: "Can’t find it? Check your spam or junk folder.",
   loginTitle: 'Sign in',
   loginBody: "Enter the email you used. We'll send you a code to find your videos and coins.",
   codeBody: (email: string) => `We sent a code to ${email}. You can also tap the link in the email.`, // NEW
@@ -489,6 +490,7 @@ const fr: Copy = {
   emailLabel: 'E-mail',
   sendCode: 'Recevoir le code',
   codeTitle: 'Entre ton code',
+  spamHint: 'Pas reçu ? Regarde dans tes spams (courrier indésirable).',
   loginTitle: 'Se connecter',
   loginBody: 'Entre l’e-mail que tu as utilisé. On t’envoie un code pour retrouver tes vidéos et tes pièces.',
   codeBody: (email: string) => `On a envoyé un code à ${email}. Tu peux aussi toucher le lien dans l’e-mail.`,
