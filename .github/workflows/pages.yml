@@ -50,7 +50,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
-          VITE_REVENUECAT_WEB_KEY: ${{ vars.VITE_REVENUECAT_WEB_KEY }}
+          # The production key may be kept as a repository secret; it wins over the variable.
+          VITE_REVENUECAT_WEB_KEY: ${{ secrets.VITE_REVENUECAT_WEB_KEY || vars.VITE_REVENUECAT_WEB_KEY }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
         run: |
           npm run build
