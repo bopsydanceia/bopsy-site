@@ -26,9 +26,24 @@ export const initialPaywall: PaywallState = {
   error: null,
 };
 
-/** Packs are for subscribers (C5); everyone else sees the plans. */
-export function modeFor(offer: Offer): PaywallMode {
-  return offer.proActive && offer.packs.length > 0 ? 'packs' : 'plans';
+/**
+ * The paywall of a video opens on the plans, on the packs for a subscriber
+ * (C5); the shop (D149) opens on the packs for everyone.
+ */
+export function modeFor(offer: Offer, shop = false): PaywallMode {
+  if (offer.packs.length === 0) return 'plans';
+  return offer.proActive || shop ? 'packs' : 'plans';
+}
+
+/** D149: someone without a plan may switch between the plans and a one-off pack. */
+export function canSwitch(state: Pick<PaywallState, 'offer' | 'status'>): boolean {
+  const offer = state.offer;
+  return offer !== null && !offer.proActive && offer.plans.length > 0 && offer.packs.length > 0 && state.status !== 'buying';
+}
+
+export function setMode(state: PaywallState, mode: PaywallMode): PaywallState {
+  if (!state.offer || state.mode === mode || !canSwitch(state)) return state;
+  return { ...state, mode, selected: defaultSelection(state.offer, mode), error: null };
 }
 
 export function itemsOf(state: Pick<PaywallState, 'offer' | 'mode'>): OfferItem[] {
@@ -42,8 +57,8 @@ export function defaultSelection(offer: Offer, mode: PaywallMode): string | null
   return (offer.plans.find((plan) => plan.period === 'week') ?? offer.plans[0])?.productId ?? null;
 }
 
-export function offerLoaded(state: PaywallState, offer: Offer, buyer: Omit<BuyerSignals, 'currency'>): PaywallState {
-  const mode = modeFor(offer);
+export function offerLoaded(state: PaywallState, offer: Offer, buyer: Omit<BuyerSignals, 'currency'>, shop = false): PaywallState {
+  const mode = modeFor(offer, shop);
   const currency = (mode === 'packs' ? offer.packs[0] : offer.plans[0])?.price.currency ?? null;
   const empty = (mode === 'packs' ? offer.packs : offer.plans).length === 0;
   return {

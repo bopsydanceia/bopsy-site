@@ -62,6 +62,8 @@ const en = {
     party: 'Party starters', // homePartyTitle
     victory: 'Victory moves', // homeVictoryTitle
   },
+  familiesNav: 'Categories',
+  familyChips: { trends: '🔥 Trending', pets: '🐾 Pets', memes: '😂 Memes', party: '🎉 Party', victory: '🏆 Victory' },
   badgeNew: 'NEW', // commonBadgeNew
   badgeHot: 'HOT', // homeBadgeHot
   tryAgain: 'Try again', // commonTryAgain
@@ -211,12 +213,21 @@ const en = {
   paywallLoadError: "We couldn't load the plans. Check your connection.", // paywallLoadError
   purchaseFailed: "The purchase didn't go through. Try again.", // commonPurchaseFailed
   waiver: 'I want my video now and I give up my 14-day right of withdrawal for this digital content.', // NEW (D115)
+  waiverCoins: 'I want my coins now and I give up my 14-day right of withdrawal for this digital content.',
   activating: 'Your plan is being activated…', // NEW
   needCoins: (cost: number) => `You need ${enCoins(cost)}`, // outOfCoinsTitle
   balance: (balance: number) => `You have ${enCoins(balance)}.`, // outOfCoinsBalance
   packTitle: (count: number) => enCoins(count), // outOfCoinsPackTitle
   packSubtitle: (videos: number) => `${enVideos(videos)} · never expire`, // outOfCoinsPackSubtitle
   bestValue: 'Best value', // outOfCoinsBestValue
+  shopTitle: 'Shop',
+  shopHeading: 'Get more coins',
+  shopLede: (cost: number) => `1 video = ${enCoins(cost)}. Bought coins never expire.`,
+  shopThanks: 'Thanks! Your coins are on their way.',
+  shopRowHint: 'Coin packs, no subscription',
+  tabPlans: 'Plans',
+  tabPacks: 'Coin packs',
+  packsPlanHint: (weekly: number) => `With a plan: ${enCoins(weekly)} every week, for less.`,
   buyCoins: (count: number) => `Buy ${enCoins(count)}`, // outOfCoinsBuy
   packLoadError: "We couldn't load the coin packs. Check your connection.", // outOfCoinsPackLoadError
   packTerms: 'One-time purchase. Bought coins never expire.', // NEW
@@ -360,6 +371,8 @@ const fr: Copy = {
     party: 'Pour lancer la soirée',
     victory: 'Danses de la victoire',
   },
+  familiesNav: 'Catégories',
+  familyChips: { trends: '🔥 Tendances', pets: '🐾 Animaux', memes: '😂 Mèmes', party: '🎉 Soirée', victory: '🏆 Victoire' },
   badgeNew: 'NOUVEAU',
   badgeHot: 'HOT',
   tryAgain: 'Réessayer',
@@ -510,12 +523,21 @@ const fr: Copy = {
   paywallLoadError: 'Impossible de charger les offres. Vérifie ta connexion.',
   purchaseFailed: 'L’achat n’a pas abouti. Réessaie.',
   waiver: 'Je veux ma vidéo tout de suite et je renonce à mon droit de rétractation de 14 jours pour ce contenu numérique.',
+  waiverCoins: 'Je veux mes pièces tout de suite et je renonce à mon droit de rétractation de 14 jours pour ce contenu numérique.',
   activating: 'Ton abonnement s’active…',
   needCoins: (cost: number) => `Il te faut ${frCoins(cost)}`,
   balance: (balance: number) => `Tu as ${frCoins(balance)}.`,
   packTitle: (count: number) => frCoins(count),
   packSubtitle: (videos: number) => `${frVideos(videos)} · sans expiration`,
   bestValue: 'Meilleur prix',
+  shopTitle: 'Boutique',
+  shopHeading: 'Recharge tes pièces',
+  shopLede: (cost: number) => `1 vidéo = ${frCoins(cost)}. Les pièces achetées n’expirent jamais.`,
+  shopThanks: 'Merci ! Tes pièces arrivent.',
+  shopRowHint: 'Packs de pièces, sans abonnement',
+  tabPlans: 'Abonnements',
+  tabPacks: 'Packs de pièces',
+  packsPlanHint: (weekly: number) => `Avec un abonnement : ${frCoins(weekly)} chaque semaine, moins cher.`,
   buyCoins: (count: number) => `Acheter ${frCoins(count)}`,
   packLoadError: 'Impossible de charger les packs de pièces. Vérifie ta connexion.',
   packTerms: 'Achat unique. Les pièces achetées n’expirent jamais.',

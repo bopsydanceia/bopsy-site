@@ -80,11 +80,11 @@ export function AccountScreen() {
                   <button type="button" class="row" disabled={busy} onClick={() => void manage()}>
                     <span>{sub.period === 'yearly' ? t.yearlyPlan : t.weeklyPlan}<small>{t.manage}</small></span>
                   </button>
-                  <a class="row" href="#/paywall">{t.buyCoinsLink}</a>
                 </>
               ) : (
                 <a class="row" href="#/paywall"><span>{t.getPro}<small>{t.noPlan}</small></span></a>
               )}
+              <a class="row" href="#/shop"><span>{t.buyCoinsLink}<small>{t.shopRowHint}</small></span></a>
               <a class="row" href="#/videos">{t.myVideos}</a>
               <a class="row" href={LINKS.support} target="_blank" rel="noopener">{t.help}</a>
               <a class="row" href={LINKS.terms} target="_blank" rel="noopener">{t.termsOfUse}</a>

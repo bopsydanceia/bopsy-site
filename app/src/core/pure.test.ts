@@ -94,6 +94,21 @@ describe('paywall state', () => {
     expect(pw.itemsOf(packs).map((item) => item.productId)).toEqual(['bopsy_coins_600', 'bopsy_coins_1500']);
   });
 
+  test('D149: the shop opens on the packs; without a plan, a switch between plans and packs', () => {
+    const shop = pw.offerLoaded(pw.initialPaywall, demoOffer(true, false), buyer, true);
+    expect(shop).toMatchObject({ mode: 'packs', selected: 'bopsy_coins_600' });
+    expect(pw.canSwitch(shop)).toBe(true);
+    const plans = pw.setMode(shop, 'plans');
+    expect(plans).toMatchObject({ mode: 'plans', selected: 'bopsy_weekly' });
+    expect(pw.setMode(plans, 'packs')).toMatchObject({ mode: 'packs', selected: 'bopsy_coins_600' });
+    // A subscriber only tops up: no switch to the plans.
+    const pro = pw.offerLoaded(pw.initialPaywall, demoOffer(false, true), buyer, true);
+    expect(pw.canSwitch(pro)).toBe(false);
+    expect(pw.setMode(pro, 'plans')).toBe(pro);
+    // No switch while a purchase runs.
+    expect(pw.canSwitch({ ...shop, status: 'buying' })).toBe(false);
+  });
+
   test('EU buyer: Continue waits for the waiver, which goes into the metadata (D115)', () => {
     let state = pw.offerLoaded(pw.initialPaywall, demoOffer(true, false), { timeZone: 'Europe/Paris' });
     expect(state.waiverRequired).toBe(true);
@@ -160,6 +175,7 @@ describe('router', () => {
     ['#/create/street-bounce', { name: 'create', slug: 'street-bounce' }],
     ['#/video/5f0c', { name: 'video', id: '5f0c' }],
     ['#/paywall', { name: 'paywall' }],
+    ['#/shop', { name: 'shop' }],
     ['#/create/../../etc', { name: 'dances' }],
     ['#/nowhere', { name: 'dances' }],
     ['#access_token=abc&type=magiclink', { name: 'auth' }],

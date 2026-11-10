@@ -14,7 +14,7 @@ export function CoinPill() {
   const wallet = useStore(app().wallet);
   if (!session || session.guest) return null;
   return (
-    <a class="pill" href="#/account" aria-label={wallet ? `${coins(wallet.total)}, ${t.account}` : t.account}>
+    <a class="pill" href="#/shop" aria-label={wallet ? `${coins(wallet.total)}, ${t.shopTitle}` : t.shopTitle}>
       <Icon name="coin" />
       <span aria-hidden="true">{wallet ? formatNumber(wallet.total) : '…'}</span>
     </a>
@@ -55,6 +55,7 @@ function DeskNav() {
     <nav class="desk-nav">
       <a href="#/" aria-current={current('dances')}>{t.navDances}</a>
       <a href="#/videos" aria-current={current('videos')}>{t.myVideos}</a>
+      <a href="#/shop" aria-current={current('shop')}>{t.shopTitle}</a>
       {signedIn ? (
         <a href="#/account" aria-current={current('account')}>{t.account}</a>
       ) : (

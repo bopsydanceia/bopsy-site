@@ -4,6 +4,8 @@
 // (D115); the checkout drawn in the page; then the video starts (coins
 // debited by the server). D139: a guest sees it first; Continue keeps the
 // pick, asks the email, and the checkout then opens by itself.
+// D149: the same screen is the shop (#/shop), on the packs for everyone;
+// without a plan, a switch goes between the plans and a one-off pack.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { LINKS } from '../../config';
 import { t } from '../../copy';
@@ -84,7 +86,7 @@ function Fan() {
   );
 }
 
-export function PaywallScreen() {
+export function PaywallScreen({ shop = false }: { shop?: boolean }) {
   const { services, flow } = app();
   const session = useStore(app().session);
   const flowState = useStore(flow.store);
@@ -95,7 +97,8 @@ export function PaywallScreen() {
   const host = useRef<HTMLDivElement>(null);
   const dance = flowState.danceSlug ? danceBySlug(flowState.danceSlug) : undefined;
   const cost = dance?.cost ?? 60;
-  const canGenerate = flowState.photo.kind === 'accepted' && dance !== undefined;
+  // The shop only tops up: it never starts a video by itself.
+  const canGenerate = !shop && flowState.photo.kind === 'accepted' && dance !== undefined;
 
   useEffect(() => {
     if (!session) navigate('/unlock', { replace: true });
@@ -109,18 +112,21 @@ export function PaywallScreen() {
       .billing()
       .then((billing) => billing.offer(session))
       .then(
-        (offer) => alive && setState((s) => pw.offerLoaded(s, offer, { timeZone: deviceTimeZone() })),
+        (offer) => alive && setState((s) => pw.offerLoaded(s, offer, { timeZone: deviceTimeZone() }, shop)),
         () => alive && setState((s) => ({ ...s, status: 'error', error: 'load_failed' })),
       );
     return () => {
       alive = false;
     };
-  }, [session?.userId, round]);
+  }, [session?.userId, round, shop]);
 
   const afterPurchase = async () => {
     setState((s) => ({ ...s, status: 'activating' }));
     if (canGenerate) await flow.generate({ afterPurchase: true });
-    else {
+    else if (shop) {
+      showToast(t.shopThanks);
+      goBack('/');
+    } else {
       showToast(t.activating);
       navigate('/account', { replace: true });
     }
@@ -162,12 +168,12 @@ export function PaywallScreen() {
 
   return (
     <>
-      <Header close={() => goBack('/')} right={<button type="button" class="link" onClick={() => setInfo(true)}>{t.whatAreCoins}</button>} />
+      <Header title={shop ? t.shopTitle : undefined} close={() => goBack('/')} right={<button type="button" class="link" onClick={() => setInfo(true)}>{t.whatAreCoins}</button>} />
       <main class="paywall">
         {state.mode === 'packs' ? (
           <>
-            <h1 class="title center">{t.needCoins(cost)}</h1>
-            <p class="lede center">{wallet ? t.balance(wallet.total) : ''}</p>
+            <h1 class="title center">{shop ? t.shopHeading : t.needCoins(cost)}</h1>
+            <p class="lede center">{wallet ? t.balance(wallet.total) : shop ? t.shopLede(cost) : ''}</p>
           </>
         ) : (
           <>
@@ -175,6 +181,16 @@ export function PaywallScreen() {
             <h1 class="title center">{t.paywallTitle}</h1>
             <p class="coin-line"><Icon name="coin" />{t.coinLine(weekly?.coins ?? 180, cost)}</p>
           </>
+        )}
+        {pw.canSwitch(state) && (
+          <div class="seg" role="tablist" aria-label={t.shopTitle}>
+            <button type="button" role="tab" aria-selected={state.mode === 'plans'} onClick={() => setState((s) => pw.setMode(s, 'plans'))}>
+              {t.tabPlans}
+            </button>
+            <button type="button" role="tab" aria-selected={state.mode === 'packs'} onClick={() => setState((s) => pw.setMode(s, 'packs'))}>
+              {t.tabPacks}
+            </button>
+          </div>
         )}
         {state.status === 'loading' && <div class="plans" aria-busy="true"><div class="plan skeleton" style={{ height: '84px' }} /><div class="plan skeleton" style={{ height: '84px' }} /></div>}
         {state.status === 'error' && <ErrorState text={state.mode === 'packs' ? t.packLoadError : t.paywallLoadError} retry={() => setRound((r) => r + 1)} />}
@@ -189,10 +205,11 @@ export function PaywallScreen() {
             )}
           </div>
         )}
-        {state.waiverRequired && (
-          <Checkbox id="waiver" class="waiver" checked={state.waiverChecked} onChange={(checked) => setState((s) => pw.setWaiver(s, checked))}>
-            {t.waiver}
-          </Checkbox>
+        {state.mode === 'packs' && pw.canSwitch(state) && weekly && (
+          <button type="button" class="plan-hint" onClick={() => setState((s) => pw.setMode(s, 'plans'))}>
+            <Icon name="coin" />
+            {t.packsPlanHint(weekly.coins)}
+          </button>
         )}
         {state.error === 'purchase_failed' && <p class="message error" role="alert">{t.purchaseFailed}</p>}
         {flowState.notice === 'plan_activating' && state.status !== 'activating' && (
@@ -206,6 +223,12 @@ export function PaywallScreen() {
           <div class="message" role="alert">{noticeText(flowState.notice)}</div>
         )}
         <div class="cta-bar">
+          {/* Next to the button it unlocks, so it is never hidden under the sticky bar on a phone. */}
+          {state.waiverRequired && (
+            <Checkbox id="waiver" class="waiver" checked={state.waiverChecked} onChange={(checked) => setState((s) => pw.setWaiver(s, checked))}>
+              {selected?.kind === 'pack' ? t.waiverCoins : t.waiver}
+            </Checkbox>
+          )}
           <button type="button" class="btn btn-cta btn-block" disabled={!pw.canContinue(state) || working} aria-busy={working} onClick={() => void buy()}>
             {working ? (state.status === 'activating' ? t.activating : '…') : selected?.kind === 'pack' ? t.buyCoins(selected.coins) : t.continue}
           </button>

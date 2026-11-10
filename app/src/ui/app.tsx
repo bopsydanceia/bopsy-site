@@ -47,6 +47,8 @@ function Screen({ route }: { route: Route }) {
       return <UnlockScreen />;
     case 'paywall':
       return <PaywallScreen />;
+    case 'shop':
+      return <PaywallScreen shop />;
     case 'generating':
       return <GeneratingScreen id={route.id} />;
     case 'video':
